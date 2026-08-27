@@ -1,0 +1,887 @@
+<title>PISA 量尺與誤差</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap">
+
+<style>
+/* ============================================================
+   PISA 量尺與誤差
+   概念：技術報告與儀器讀數。細線分隔，不確定性以帶狀呈現。
+   所有圖表由 R（ggplot2 + svglite）產出，經 r-stats MCP 工作階段計算。
+   ============================================================ */
+:root {
+  color-scheme: light;
+  --paper:#eef1ef; --surface:#fafcfa; --surface-2:#f3f6f4;
+  --ink:#111917; --ink-2:#46524e; --ink-3:#7a8783;
+  --rule:#d3dad6; --rule-soft:#e4e9e6;
+  --accent:#0e5f57; --accent-2:#14837e;
+  --accent-wash:rgba(14,95,87,.08); --accent-line:rgba(14,95,87,.28);
+  --good:#0a7a0a; --critical:#c0362f;
+  --s1:#2a78d6; --s2:#eb6834;
+  --serif:"Noto Serif TC","Songti TC",Georgia,serif;
+  --sans:"Noto Sans TC",-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --measure:34rem; --wrap:1180px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --paper:#0a100f; --surface:#111917; --surface-2:#161f1d;
+    --ink:#e4ede9; --ink-2:#a3b0ab; --ink-3:#78857f;
+    --rule:#253230; --rule-soft:#1b2523;
+    --accent:#4fbfb0; --accent-2:#6fd3c4;
+    --accent-wash:rgba(79,191,176,.12); --accent-line:rgba(79,191,176,.4);
+    --good:#17b317; --critical:#e66767;
+    --s1:#3987e5; --s2:#d95926;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper:#0a100f; --surface:#111917; --surface-2:#161f1d;
+  --ink:#e4ede9; --ink-2:#a3b0ab; --ink-3:#78857f;
+  --rule:#253230; --rule-soft:#1b2523;
+  --accent:#4fbfb0; --accent-2:#6fd3c4;
+  --accent-wash:rgba(79,191,176,.12); --accent-line:rgba(79,191,176,.4);
+  --good:#17b317; --critical:#e66767;
+  --s1:#3987e5; --s2:#d95926;
+}
+
+* { box-sizing:border-box; }
+body { margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans);
+       font-size:15px; line-height:1.7; -webkit-font-smoothing:antialiased; }
+h1,h2,h3,h4 { font-family:var(--serif); font-weight:700; text-wrap:balance; margin:0; line-height:1.35; }
+p { margin:0; }
+a { color:var(--accent); text-underline-offset:2px; }
+:focus-visible { outline:2px solid var(--accent-2); outline-offset:2px; border-radius:2px; }
+.wrap { max-width:var(--wrap); margin-inline:auto; padding-inline:28px; }
+@media (max-width:640px){ .wrap{ padding-inline:16px; } }
+
+.masthead { border-bottom:1px solid var(--rule); background:var(--surface); }
+.masthead-in { display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between;
+               gap:20px; padding-block:30px 22px; }
+.brand h1 { font-size:clamp(1.8rem,3.4vw,2.6rem); letter-spacing:-.01em; }
+.brand .sub { font-family:var(--mono); font-size:.72rem; letter-spacing:.14em;
+              text-transform:uppercase; color:var(--ink-3); margin-top:6px; }
+.brand .tag { color:var(--ink-2); margin-top:10px; max-width:46ch; font-size:.92rem; }
+.provenance { display:grid; grid-template-columns:repeat(auto-fit,minmax(96px,1fr));
+              gap:2px 22px; font-family:var(--mono); font-size:.74rem; }
+.provenance dt { color:var(--ink-3); letter-spacing:.06em; text-transform:uppercase; font-size:.66rem; }
+.provenance dd { margin:0; color:var(--ink); font-variant-numeric:tabular-nums; font-weight:500; }
+
+/* ---------- 報告下載 ---------- */
+.dl { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-top:16px; }
+.dl-btn {
+  appearance:none; cursor:pointer; font-family:var(--sans); font-size:.9rem; font-weight:500;
+  color:var(--paper); background:var(--accent); border:1px solid var(--accent);
+  padding:9px 18px; display:inline-flex; align-items:center; gap:9px;
+  transition:background .15s, opacity .15s;
+}
+.dl-btn:hover:not(:disabled) { background:var(--accent-2); border-color:var(--accent-2); }
+.dl-btn:disabled { opacity:.55; cursor:default; }
+.dl-btn .ic { font-size:1.05em; line-height:1; }
+.dl-meta { font-family:var(--mono); font-size:.72rem; color:var(--ink-3); letter-spacing:.04em; }
+.dl-msg { font-size:.82rem; color:var(--ink-2); }
+.dl-msg.err { color:var(--critical); }
+.dl-msg.ok { color:var(--good); }
+.dl-card {
+  background:var(--surface); border:1px solid var(--rule); border-left:3px solid var(--accent);
+  padding:20px 22px; margin-top:18px; max-width:62ch;
+}
+.dl-card h3 { font-size:1rem; margin-bottom:6px; }
+.dl-card p { font-size:.9rem; color:var(--ink-2); }
+.dl-card ul { margin:.7em 0 0; padding-left:1.2em; font-size:.88rem; color:var(--ink-2); }
+.dl-card li { margin:.25em 0; }
+
+.tabs { position:sticky; top:0; z-index:40; background:var(--paper); border-bottom:1px solid var(--rule); }
+.tabs-in { display:flex; gap:2px; overflow-x:auto; scrollbar-width:thin; }
+.tab { appearance:none; border:0; background:transparent; cursor:pointer; font-family:var(--sans);
+       font-size:.9rem; font-weight:500; color:var(--ink-3); padding:13px 15px; white-space:nowrap;
+       border-bottom:2px solid transparent; transition:color .15s,border-color .15s; }
+.tab:hover { color:var(--ink); }
+.tab[aria-selected="true"] { color:var(--accent); border-bottom-color:var(--accent); }
+.tab .num { font-family:var(--mono); font-size:.7rem; opacity:.55; margin-right:6px; }
+
+.panel { display:none; padding-block:36px 72px; }
+.panel.on { display:block; }
+.sec { border-top:1px solid var(--rule-soft); padding-top:26px; margin-top:38px; }
+.sec:first-child { border-top:0; padding-top:0; margin-top:0; }
+.sec > h2 { font-size:1.25rem; margin-bottom:4px; }
+.sec > .lead { color:var(--ink-2); max-width:var(--measure); margin-bottom:20px; font-size:.95rem; }
+.eyebrow { font-family:var(--mono); font-size:.68rem; letter-spacing:.16em; text-transform:uppercase;
+           color:var(--accent); margin-bottom:8px; }
+.prose { max-width:var(--measure); }
+.prose p + p { margin-top:.9em; }
+.prose h3 { font-size:1rem; margin-top:1.6em; margin-bottom:.4em; }
+.prose ul { margin:.6em 0; padding-left:1.2em; }
+.prose li { margin:.3em 0; }
+code { font-family:var(--mono); font-size:.86em; background:var(--surface-2);
+       border:1px solid var(--rule-soft); padding:.1em .35em; border-radius:3px; }
+
+.tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1px;
+         background:var(--rule-soft); border:1px solid var(--rule-soft); }
+.tile { background:var(--surface); padding:18px 18px 16px; }
+.tile .k { font-family:var(--mono); font-size:.66rem; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3); }
+.tile .v { font-family:var(--mono); font-size:1.72rem; font-weight:500; line-height:1.15;
+           margin-top:6px; letter-spacing:-.02em; }
+.tile .n { font-size:.78rem; color:var(--ink-3); margin-top:2px; }
+
+.thesis { background:var(--surface); border:1px solid var(--rule); border-left:3px solid var(--accent);
+          padding:22px 24px; margin-top:22px; }
+.thesis .big { font-family:var(--mono); font-size:2.4rem; font-weight:500; letter-spacing:-.03em;
+               color:var(--accent); line-height:1; }
+.thesis p { color:var(--ink-2); max-width:52ch; margin-top:10px; font-size:.94rem; }
+
+.controls { display:flex; flex-wrap:wrap; align-items:center; gap:10px 18px;
+            padding:14px 0 18px; border-bottom:1px solid var(--rule-soft); margin-bottom:20px; }
+.ctl-group { display:flex; align-items:center; gap:8px; }
+.ctl-label { font-family:var(--mono); font-size:.68rem; letter-spacing:.1em;
+             text-transform:uppercase; color:var(--ink-3); }
+.seg { display:inline-flex; border:1px solid var(--rule); background:var(--surface); }
+.seg button { appearance:none; border:0; background:transparent; cursor:pointer; font-family:var(--sans);
+              font-size:.84rem; color:var(--ink-2); padding:6px 13px; border-right:1px solid var(--rule-soft); }
+.seg button:last-child { border-right:0; }
+.seg button[aria-pressed="true"] { background:var(--accent); color:var(--paper); font-weight:500; }
+
+.switch { display:inline-flex; align-items:center; gap:9px; cursor:pointer; user-select:none; }
+.switch input { position:absolute; opacity:0; width:0; height:0; }
+.switch .track { width:40px; height:22px; border-radius:11px; background:var(--rule);
+                 border:1px solid var(--rule); position:relative; transition:background .18s; }
+.switch .track::after { content:""; position:absolute; top:2px; left:2px; width:16px; height:16px;
+                        border-radius:50%; background:var(--surface); transition:transform .18s;
+                        box-shadow:0 1px 2px rgba(0,0,0,.2); }
+.switch input:checked + .track { background:var(--accent); border-color:var(--accent); }
+.switch input:checked + .track::after { transform:translateX(18px); }
+.switch input:focus-visible + .track { outline:2px solid var(--accent-2); outline-offset:2px; }
+.switch .lab { font-size:.88rem; font-weight:500; }
+
+/* ---------- R 產生的圖 ---------- */
+figure { margin:0; }
+.figbox { background:var(--surface); border:1px solid var(--rule-soft); padding:10px; overflow-x:auto; }
+.figbox svg { display:block; width:100%; height:auto; max-width:100%; }
+figcaption { font-size:.8rem; color:var(--ink-3); margin-top:10px; max-width:var(--measure); }
+.fig-d { display:none; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .fig-l { display:none; }
+  :root:not([data-theme="light"]) .fig-d { display:block; }
+}
+:root[data-theme="dark"] .fig-l { display:none; }
+:root[data-theme="dark"] .fig-d { display:block; }
+.figset > .figitem { display:none; }
+.figset > .figitem.on { display:block; }
+.rcredit { font-family:var(--mono); font-size:.66rem; letter-spacing:.08em; text-transform:uppercase;
+           color:var(--ink-3); margin-top:6px; display:flex; gap:8px; align-items:center; }
+.rcredit .dot { width:5px; height:5px; border-radius:50%; background:var(--accent); }
+
+.tablewrap { overflow-x:auto; border:1px solid var(--rule-soft); background:var(--surface); max-height:640px; }
+table { border-collapse:collapse; width:100%; font-size:.85rem; }
+th,td { text-align:right; padding:7px 12px; border-bottom:1px solid var(--rule-soft); white-space:nowrap; }
+th:first-child, td:first-child { text-align:left; }
+th { font-family:var(--mono); font-size:.68rem; letter-spacing:.06em; text-transform:uppercase;
+     color:var(--ink-3); font-weight:500; position:sticky; top:0; background:var(--surface-2);
+     border-bottom:1px solid var(--rule); z-index:2; }
+th.sortable { cursor:pointer; user-select:none; }
+th.sortable:hover { color:var(--ink); }
+th .arrow { opacity:.4; margin-left:3px; }
+th[aria-sort] .arrow { opacity:1; color:var(--accent); }
+td { font-variant-numeric:tabular-nums; font-family:var(--mono); color:var(--ink-2); }
+td:first-child { font-family:var(--sans); color:var(--ink); }
+tbody tr:hover td { background:var(--surface-2); }
+tbody tr.me td { background:var(--accent-wash); }
+tbody tr.me td:first-child { font-weight:700; box-shadow:inset 2px 0 0 var(--accent); }
+
+.badge { display:inline-flex; align-items:center; gap:5px; font-family:var(--sans); font-size:.74rem;
+         font-weight:500; padding:2px 8px; border:1px solid; border-radius:2px; }
+.badge.yes { color:var(--good); border-color:var(--good); }
+.badge.no { color:var(--ink-3); border-color:var(--rule); }
+.badge.flip { color:var(--critical); border-color:var(--critical); }
+.deltapos { color:var(--good); }
+.deltaneg { color:var(--critical); }
+
+.note { border-left:2px solid var(--accent-line); padding:2px 0 2px 14px; color:var(--ink-2);
+        font-size:.88rem; max-width:var(--measure); margin-top:16px; }
+.warnbox { background:var(--surface); border:1px solid var(--rule); border-left:3px solid var(--critical);
+           padding:16px 18px; margin-top:18px; max-width:56ch; }
+.warnbox h3 { font-size:.98rem; color:var(--critical); margin-bottom:6px; }
+.warnbox p { font-size:.9rem; color:var(--ink-2); }
+.stack { display:flex; flex-direction:column; gap:34px; }
+
+.pipe { display:flex; flex-wrap:wrap; gap:1px; background:var(--rule-soft); border:1px solid var(--rule-soft); }
+.pipe-step { background:var(--surface); padding:14px 16px; flex:1 1 150px; min-width:150px; }
+.pipe-step .s-n { font-family:var(--mono); font-size:.66rem; color:var(--accent); letter-spacing:.1em; }
+.pipe-step .s-t { font-weight:700; font-size:.9rem; margin-top:3px; }
+.pipe-step .s-d { font-size:.78rem; color:var(--ink-3); margin-top:4px; line-height:1.5; }
+.tree { font-family:var(--mono); font-size:.79rem; line-height:1.75; color:var(--ink-2);
+        background:var(--surface); border:1px solid var(--rule-soft); padding:16px 18px;
+        overflow-x:auto; white-space:pre; }
+.tree b { color:var(--ink); font-weight:500; }
+footer { border-top:1px solid var(--rule); padding-block:24px 40px; font-size:.8rem; color:var(--ink-3); }
+footer .fl { display:flex; flex-wrap:wrap; gap:6px 24px; }
+</style>
+
+<header class="masthead">
+  <div class="wrap masthead-in">
+    <div class="brand">
+      <h1>PISA 量尺與誤差</h1>
+      <div class="sub">國際學生能力評量計畫 · 分析平台</div>
+      <p class="tag">全部估計在 R 工作階段完成：複雜抽樣權重、80 組 Fay 重複權重、10 個合理推估值，跨輪次比較一律納入連結誤差。</p>
+      <!--DLBLOCK:1-->
+    </div>
+    <dl class="provenance" id="prov"></dl>
+  </div>
+</header>
+
+<nav class="tabs" aria-label="主要區段">
+  <div class="wrap tabs-in" role="tablist" id="tablist"></div>
+</nav>
+
+<main class="wrap">
+
+  <!-- ============ 總覽 ============ -->
+  <section class="panel on" id="p-overview" role="tabpanel" aria-labelledby="t-overview">
+    <div class="sec">
+      <div class="eyebrow">資料庫現況</div>
+      <h2>三個輪次，一百七十四萬名學生</h2>
+      <p class="lead">資料取自 OECD 公開使用檔。每一個估計值都同時處理兩種變異來源：複雜抽樣設計，以及能力值本身是推估而非實測。</p>
+      <div class="tiles" id="tiles"></div>
+    </div>
+
+    <div class="sec">
+      <div class="eyebrow">本平台的主張</div>
+      <h2>跨輪次比較必須納入連結誤差</h2>
+      <div class="thesis">
+        <div class="big" id="flipBig">—</div>
+        <p id="flipText"></p>
+      </div>
+      <p class="note">連結誤差反映的是「同一道量尺在不同輪次之間對齊」本身的不確定性。它與樣本大小無關，再多的樣本也消不掉。數值取自 PISA 2022 技術報告 Annex Table 14.A.19。</p>
+    </div>
+
+    <div class="sec">
+      <div class="eyebrow">焦點</div>
+      <h2>臺灣三輪表現</h2>
+      <p class="lead">括號內為標準誤。2018 是三輪中的低點，選哪一年當基期會講出完全不同的故事。</p>
+      <div class="tablewrap"><table id="twTable"></table></div>
+      <div class="warnbox">
+        <h3>兩端同時擴大</h3>
+        <p id="twSpread"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 描述統計 ============ -->
+  <section class="panel" id="p-desc" role="tabpanel" aria-labelledby="t-desc">
+    <div class="sec">
+      <div class="eyebrow">先看資料長什麼樣</div>
+      <h2>加權描述統計</h2>
+      <p class="lead">PISA 依學校規模與抽樣機率賦權，未加權的統計描述的是樣本，不是母體。以下每一張圖都以最終學生權重計算。</p>
+    </div>
+
+    <div class="stack">
+      <figure>
+        <div class="figbox"><!--FIG:desc_weight_effect--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 加權平均與未加權平均之差</div>
+        <figcaption>臺灣是全體 80 個國家與經濟體中加權效果最大的：未加權平均 534.0 分，加權後 547.1 分，差 13.1 分。忽略權重不是小數點後的問題。</figcaption>
+      </figure>
+
+      <figure>
+        <div class="figbox"><!--FIG:desc_density--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 加權核密度估計</div>
+        <figcaption>描述分數分配時，正確作法是把 10 個合理推估值全部攤平、各給 1/10 的權重，而不是取平均後當成單一觀測值。</figcaption>
+      </figure>
+
+      <figure>
+        <div class="figbox"><!--FIG:desc_box--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 加權分位數</div>
+        <figcaption>盒鬚以加權分位數重建，非樣本分位數。2022 年三個領域的分布同時上移，但盒身也變長。</figcaption>
+      </figure>
+
+      <figure>
+        <div class="figbox"><!--FIG:desc_escs--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 加權核密度估計</div>
+        <figcaption>ESCS 為 OECD 建構的家庭社經地位綜合指標，由父母職業地位、教育程度與家庭資產三者合成。</figcaption>
+      </figure>
+
+      <figure>
+        <div class="figbox"><!--FIG:variance_decomp--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · Rubin 規則變異數分解</div>
+        <figcaption>抽樣變異來自複雜抽樣設計，以 80 組 Fay 重複權重估計；推估變異來自能力值是從後驗分配抽出的。只用單一個推估值會完全漏掉後者。</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ============ 趨勢 ============ -->
+  <section class="panel" id="p-trend" role="tabpanel" aria-labelledby="t-trend">
+    <div class="sec">
+      <div class="eyebrow">趨勢</div>
+      <h2>各輪平均分數與 95% 信賴區間</h2>
+      <p class="lead">陰影帶為 95% 信賴區間。區間重疊不等於差異不顯著，正式檢定請看「連結誤差」分頁。</p>
+      <figure>
+        <div class="figbox"><!--FIG:trend_focus--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 合理推估值 × Fay 重複權重</div>
+        <figcaption>東亞五個經濟體與三個對照國。臺灣以粗線標示。</figcaption>
+      </figure>
+    </div>
+
+    <div class="sec">
+      <h2>全部國家的逐輪數值</h2>
+      <p class="lead">點欄位標題可排序。標星號者代表該變化在納入連結誤差後仍達統計顯著。</p>
+      <div class="controls">
+        <div class="ctl-group"><span class="ctl-label">領域</span>
+          <div class="seg" id="trDomain" role="group" aria-label="選擇領域"></div></div>
+      </div>
+      <div class="tablewrap"><table id="trendTable"></table></div>
+    </div>
+  </section>
+
+  <!-- ============ 連結誤差 ============ -->
+  <section class="panel" id="p-link" role="tabpanel" aria-labelledby="t-link">
+    <div class="sec">
+      <div class="eyebrow">本平台的核心</div>
+      <h2>打開開關，看結論如何翻盤</h2>
+      <p class="lead">兩輪次的差異檢定，標準誤應為 <code>√(SE₁² + SE₂² + 連結誤差²)</code>。漏掉第三項會低估不確定性，把不顯著的差異判成顯著。</p>
+
+      <div class="controls">
+        <label class="switch">
+          <input type="checkbox" id="leToggle" checked>
+          <span class="track"></span><span class="lab">納入連結誤差</span>
+        </label>
+        <div class="ctl-group"><span class="ctl-label">領域</span>
+          <div class="seg" id="leDomain" role="group" aria-label="選擇領域"></div></div>
+        <div class="ctl-group"><span class="ctl-label">基期</span>
+          <div class="seg" id="leFrom" role="group" aria-label="選擇基期"></div></div>
+      </div>
+
+      <div class="tiles" id="leTiles" style="margin-bottom:26px"></div>
+
+      <figure style="margin-bottom:30px">
+        <div class="figbox figset" id="leFigs"><!--FIGSET:linkerr--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 兩種標準誤的區間對照</div>
+        <figcaption>粗線是忽略連結誤差時的 95% 區間，細線是正確的區間。細線比粗線長出的部分，就是連結誤差帶來的額外不確定性；紅點標示因此翻盤的國家。</figcaption>
+      </figure>
+
+      <h3 style="font-size:1rem;margin-bottom:8px">會下錯結論的比較</h3>
+      <p class="lead" style="margin-bottom:14px">下列每一組，忽略連結誤差時判為顯著，正確計算後並不顯著。</p>
+      <div class="tablewrap"><table id="flipTable"></table></div>
+    </div>
+
+    <div class="sec">
+      <div class="eyebrow">來源</div>
+      <h2>連結誤差對照表</h2>
+      <p class="lead">PISA 2022 技術報告 Annex Table 14.A.19。空格表示該領域在該輪次尚非主測領域，OECD 明示不可比較。</p>
+      <div class="tablewrap"><table id="leTable"></table></div>
+      <p class="note">注意 2006 年的閱讀連結誤差高達 8.56 分。以 2006 為基期談閱讀趨勢時，十五分的差距未必顯著。</p>
+    </div>
+  </section>
+
+  <!-- ============ 各國比較 ============ -->
+  <section class="panel" id="p-country" role="tabpanel" aria-labelledby="t-country">
+    <div class="sec">
+      <div class="eyebrow">全體排名</div>
+      <h2>PISA 2022 各國平均與信賴區間</h2>
+      <div class="controls">
+        <div class="ctl-group"><span class="ctl-label">領域</span>
+          <div class="seg" id="ctyDomain" role="group" aria-label="選擇領域"></div></div>
+        <div class="ctl-group"><span class="ctl-label">表格輪次</span>
+          <div class="seg" id="ctyCycle" role="group" aria-label="選擇輪次"></div></div>
+      </div>
+      <figure>
+        <div class="figbox figset" id="rankFigs"><!--FIGSET:rank--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 合理推估值 × Fay 重複權重</div>
+        <figcaption>橫線為 95% 信賴區間，圓點為平均分數。兩國區間重疊時，差異未必達統計顯著。</figcaption>
+      </figure>
+    </div>
+
+    <div class="sec">
+      <h2>完整數值表</h2>
+      <p class="lead">點欄位標題可排序。臺灣以底色標示。</p>
+      <div class="tablewrap"><table id="ctyTable"></table></div>
+    </div>
+  </section>
+
+  <!-- ============ 公平性 ============ -->
+  <section class="panel" id="p-equity" role="tabpanel" aria-labelledby="t-equity">
+    <div class="sec">
+      <div class="eyebrow">公平性</div>
+      <h2>成績高，不代表分配公平</h2>
+      <div class="controls">
+        <div class="ctl-group"><span class="ctl-label">領域</span>
+          <div class="seg" id="eqDomain" role="group" aria-label="選擇領域"></div></div>
+      </div>
+    </div>
+
+    <div class="stack">
+      <figure>
+        <div class="figbox figset" id="escsFigs"><!--FIGSET:escs--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 合理推估值加權迴歸</div>
+        <figcaption>社經梯度以 ESCS 對分數的加權迴歸斜率估計，10 個推估值各跑一次後依 Rubin 規則合併，抽樣變異以重複權重估計。</figcaption>
+      </figure>
+
+      <figure>
+        <div class="figbox figset" id="profFigs"><!--FIGSET:prof--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 加權比率與精熟等級切點</div>
+        <figcaption>切點取自 PISA 2022 技術報告 Annex Tables 17.A.2、17.A.12、17.A.13。兩端同時擴大代表分配拉開，而非整體提升。</figcaption>
+      </figure>
+
+      <figure>
+        <div class="figbox figset" id="gapFigs"><!--FIGSET:gap--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 分組加權平均之差</div>
+        <figcaption>同一輪次內的兩組比較不需納入連結誤差，因為兩組位於同一次量尺連結上。</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ============ 方法學 ============ -->
+  <section class="panel" id="p-method" role="tabpanel" aria-labelledby="t-method">
+    <div class="sec">
+      <div class="eyebrow">先讀這一段</div>
+      <h2>PISA 能不能做縱貫分析</h2>
+      <div class="prose">
+        <p><strong>不能，至少不是一般意義的縱貫分析。</strong>PISA 是重複橫斷設計，每三年抽一批新的 15 歲學生，沒有任何學生被重複測量。2022 年的受測者與 2018 年的受測者是完全不同的人。</p>
+        <h3>可以做</h3>
+        <ul>
+          <li>國家或群體層次的表現趨勢</li>
+          <li>分布變化：低成就比率、高成就比率、分數離散程度</li>
+          <li>關係強度的變化，例如社經梯度斜率是否變陡</li>
+          <li>世代比較：1999 年出生世代對比 2006 年出生世代</li>
+        </ul>
+        <h3>不能做</h3>
+        <ul>
+          <li>個人成長軌跡</li>
+          <li>潛在成長模型、成長混合模型</li>
+          <li>交叉延宕模型、隨機截距 CLPM</li>
+          <li>個體層次的固定效果模型</li>
+        </ul>
+        <p>若研究問題非談個人成長不可，PISA 本身做不到。可考慮臺灣教育長期追蹤資料庫（TEPS、TEPS-B），或部分國家對 PISA 樣本所做的後續追蹤研究。</p>
+      </div>
+    </div>
+
+    <div class="sec">
+      <h2>複雜抽樣與權重</h2>
+      <div class="prose">
+        <p>PISA 採兩階段叢集抽樣：先依規模機率抽學校，再在校內抽學生。學生被抽中的機率並不相同，因此每一筆資料都帶有權重。</p>
+        <ul>
+          <li><code>W_FSTUWT</code>　最終學生權重，幾乎所有分析都用這個</li>
+          <li><code>SENWT</code>　參議院權重，把各國權重總和標準化為相同值，只在跨國合併且希望各國等權時使用</li>
+          <li><code>W_FSTURWT1</code>–<code>80</code>　重複權重，只用於變異數估計，不可拿來算點估計</li>
+          <li><code>W_SCHGRNRABWT</code>　學校層級分析用</li>
+        </ul>
+        <p>用錯權重的後果不是稍有偏差，而是估計值本身沒有意義。以 PISA 2022 數學為例，80 個國家與經濟體中，加權與未加權平均的差異中位數為 2.07 分，最大達 20.6 分（泰國），臺灣則是 13.1 分。</p>
+      </div>
+    </div>
+
+    <div class="sec">
+      <h2>兩個變異來源</h2>
+      <div class="prose">
+        <h3>抽樣變異</h3>
+        <p>以 Fay 平衡重複半樣本法估計，80 組重複權重，Fay 係數 0.5：</p>
+        <p><code>V_抽樣 = 1 / (80 × (1 − 0.5)²) × Σ (θᵣ − θ)² = (1/20) × Σ (θᵣ − θ)²</code></p>
+        <h3>推估變異</h3>
+        <p>學生能力不是實測值，而是從後驗分配抽出的 10 個合理推估值。依 Rubin 規則合併：</p>
+        <p><code>V_推估 = (1 + 1/M) × (1/(M−1)) × Σ (θₘ − θ̄)²,  M = 10</code></p>
+        <p>總標準誤為兩者相加後開根號。<strong>只用單一個推估值、或把 10 個推估值平均後當成觀測值，都會低估標準誤。</strong></p>
+        <h3>三方驗證</h3>
+        <p>本平台的估計核心經過三種獨立實作交叉驗證，結果完全一致：自建的 <code>lib_pisa.R</code>、R 套件 <code>intsvy</code>、以及 r-stats MCP 的 <code>survey_mean</code>。以臺灣 PISA 2022 數學為例，三者皆得平均 547.09、標準誤 3.778，其中抽樣成分 3.728、推估成分 0.611。臺灣 2015 年三領域的估計亦與 OECD 公布值一致。</p>
+      </div>
+    </div>
+
+    <div class="sec">
+      <h2>跨輪次可比性的硬限制</h2>
+      <div class="prose">
+        <h3>各領域最早可與 2022 比較的輪次</h3>
+        <p>每個領域最早只能回溯到它首次成為主測領域的那一輪：閱讀到 2000、數學到 2003、科學到 2006、財金素養到 2012。超出此範圍不是「誤差比較大」，而是沒有共同量尺。</p>
+        <h3>施測模式改變</h3>
+        <p>2015 年起主要改為電腦施測，此前為紙筆。OECD 已在量尺連結中處理模式效應，但跨越 2015 這條線的比較，不確定性本質上高於 2015 之後各輪之間的比較。</p>
+        <h3>ESCS 只能回溯到 2012</h3>
+        <p>ESCS 在 2022 年重新校準過，各輪原始 ESCS 不可直接跨輪比較。OECD 另發布 trend ESCS，把 2012、2015、2018 三輪重新計算到 2022 的量尺。</p>
+        <h3>PISA 2022 的特殊情況</h3>
+        <p>2022 年施測期間橫跨 COVID-19 疫情，部分國家延後施測或調整樣本。解讀 2018 到 2022 的變化時，教育政策效果與疫情衝擊難以分離。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 系統 ============ -->
+  <section class="panel" id="p-system" role="tabpanel" aria-labelledby="t-system">
+    <div class="sec">
+      <div class="eyebrow">資料流</div>
+      <h2>從 OECD 檔案伺服器到本頁圖表</h2>
+      <div class="pipe">
+        <div class="pipe-step"><div class="s-n">01</div><div class="s-t">下載</div><div class="s-d">官方 zip 存入 raw 層，記錄 SHA-256 與來源網址，永不覆寫</div></div>
+        <div class="pipe-step"><div class="s-n">02</div><div class="s-t">轉檔</div><div class="s-d">解壓 SPSS 檔，輸出完整變數字典，抽取分析欄位寫成 Parquet</div></div>
+        <div class="pipe-step"><div class="s-n">03</div><div class="s-t">對齊</div><div class="s-d">跨輪變數命名統一，併入官方 trend ESCS 與越南單獨發布檔</div></div>
+        <div class="pipe-step"><div class="s-n">04</div><div class="s-t">倉儲</div><div class="s-d">DuckDB 直接查詢 Parquet，不需伺服器也不需先載入記憶體</div></div>
+        <div class="pipe-step"><div class="s-n">05</div><div class="s-t">估計</div><div class="s-d">R 工作階段載入全部資料，以權重、重複權重與推估值估計</div></div>
+        <div class="pipe-step"><div class="s-n">06</div><div class="s-t">繪圖</div><div class="s-d">ggplot2 產出亮暗兩版 SVG，直接內嵌本頁</div></div>
+      </div>
+      <p class="note">本頁所有圖表都是 R 的輸出，不是網頁重畫的。分析在持續的 R 工作階段中執行（透過 r-stats MCP），估計函式與終端機分析共用同一份 <code>lib_pisa.R</code>。</p>
+    </div>
+
+    <div class="sec">
+      <h2>目錄結構</h2>
+      <div class="tree">~/PISA/
+├── <b>raw/</b>                    原始 zip，來源忠實副本，永不覆寫
+│   ├── 2015/ 2018/ 2022/
+│   └── manifest.csv          每個檔案的網址、位元組數、SHA-256
+├── <b>parquet/silver/</b>         Parquet + 完整變數字典
+├── <b>warehouse/</b>pisa.duckdb   分析倉儲
+├── <b>R/</b>
+│   ├── 00_config.R           路徑、來源清單、BRR 參數、rebuild_all()
+│   ├── 01_download.R         下載與校驗和
+│   ├── 02_extract_convert.R  解壓、字典、抽欄、轉 Parquet
+│   ├── 03_harmonise.R        跨輪對齊、trend ESCS、選考領域併檔
+│   ├── 04_warehouse.R        DuckDB view 與品質檢核表
+│   ├── 05_analysis.R         平均、精熟等級、梯度、性別差距
+│   ├── 06_trend.R            跨輪比較（含連結誤差）
+│   ├── 07_run_trend.R        一次跑完趨勢分析
+│   ├── 08_export_web.R       產出本頁的資料
+│   └── <b>lib_pisa.R</b>            估計核心（三方驗證）
+├── <b>web/figs/</b>               R 產出的 SVG，亮暗各一版
+├── <b>output/</b>                 分析結果
+└── <b>docs/</b>                   方法學與架構文件</div>
+      <p class="note">從零重建一行完成：<code>Rscript -e 'source("~/PISA/R/00_config.R"); rebuild_all()'</code></p>
+    </div>
+
+    <div class="sec">
+      <div class="eyebrow">輸出</div>
+      <h2>APA 第七版報告</h2>
+      <p class="lead">頁面上的每一張圖與每一個表，都可以一次打包成 Word 檔。</p>
+      <div class="dl-card">
+        <h3>報告內容</h3>
+        <p>24 張圖、5 個表，每一項都附編號、斜體標題（置於上方）與研究結果說明（置於下方的「註」），並包含研究方法、結果、結論與研究限制四個部分。</p>
+        <ul>
+          <li>中文字體標楷體，西文與數字 Times New Roman，12 pt</li>
+          <li>兩倍行高，內文左右對齊</li>
+          <li>A4 版面，上下左右邊界 2.54 公分</li>
+          <li>表格採 APA 體例：僅頂線、標題列下方線與底線，無直線</li>
+        </ul>
+        <!--DLBLOCK:2-->
+      </div>
+      <p class="note">APA 第七版正文原訂靠左對齊、右側不齊；本報告依需求改為左右對齊，此為刻意的體例調整。</p>
+    </div>
+
+    <div class="sec">
+      <h2>資料範圍與限制</h2>
+      <div class="prose">
+        <h3>已納入</h3>
+        <p>PISA 2015、2018、2022 的學生檔與學校檔，以及 2022 年的創造思考（63 國）與財金素養（20 國）選考領域。合計 174 萬名學生。</p>
+        <h3>三個容易踩的坑</h3>
+        <ul>
+          <li><strong>越南 2018</strong>　OECD 未將其合理推估值放進主學生檔，另以獨立檔案發布。不處理的話越南 2018 的所有估計都是空值。</li>
+          <li><strong>創造思考檔沒有權重</strong>　認知檔只有推估值與試題反應，權重在主學生檔，必須以學生編號併回。</li>
+          <li><strong>財金素養壓縮檔內有三個資料檔</strong>　只有問卷檔含推估值與權重，試題檔兩者皆無。</li>
+        </ul>
+        <h3>2012 以前無法自動取得</h3>
+        <p>OECD 於 2024 年改版官網，舊的檔案網址全部失效，新的資料集頁面啟用了人機驗證。這部分需要以瀏覽器手動下載，且提供的是 ASCII 定寬檔加上 SPSS 讀取語法。</p>
+        <h3>PISA 2025</h3>
+        <p>首波結果預定 2026 年 9 月 8 日發布。屆時在來源清單加一列網址、重跑流程、更新連結誤差表即可納入。</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap fl">
+    <span>資料來源：OECD PISA Public Use Files</span>
+    <span>連結誤差：PISA 2022 Technical Report, Annex Table 14.A.19</span>
+    <span>圖表：R 4.5.2 · ggplot2 · svglite</span>
+    <span id="footGen"></span>
+  </div>
+</footer>
+
+<script>
+const DATA = /*__PISA_DATA__*/ null /*__END__*/;
+const ZH   = /*__ZH_DATA__*/ {} /*__END__*/;
+
+const $  = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const DOMAIN_ZH = { MATH: '數學', READ: '閱讀', SCIE: '科學', FLIT: '財金素養' };
+const fmt = (v, d) => (v === null || v === undefined || Number.isNaN(v))
+  ? '—' : Number(v).toFixed(d === undefined ? 1 : d);
+const arr = v => Array.isArray(v) ? v : (v === null || v === undefined ? [] : [v]);
+
+/* 國名 */
+const NAME = {};
+(function () {
+  const byId = {};
+  arr(DATA.countryNames).forEach(r => { byId[r.CNTRYID] = r.name; });
+  arr(DATA.means).forEach(r => {
+    if (NAME[r.CNT]) return;
+    const en = byId[r.CNTRYID] || r.CNT;
+    NAME[r.CNT] = { zh: ZH[en] || en, en: en, oecd: r.OECD === 1 };
+  });
+})();
+const nm = c => (NAME[c] ? NAME[c].zh : c);
+
+const IDX = {};
+const key = function () { return Array.prototype.join.call(arguments, '|'); };
+arr(DATA.means).forEach(r => { IDX['m' + key(r.CNT, r.cycle, r.domain)] = r; });
+arr(DATA.prof).forEach(r => { IDX['p' + key(r.CNT, r.cycle, r.domain)] = r; });
+arr(DATA.gender).forEach(r => { IDX['g' + key(r.CNT, r.cycle, r.domain)] = r; });
+arr(DATA.escs).forEach(r => { IDX['e' + key(r.CNT, r.cycle, r.domain)] = r; });
+
+const CYCLES  = arr(DATA.meta.cycles).map(Number);
+const DOMAINS = arr(DATA.meta.domains);
+const ALL_CNT = Object.keys(NAME).sort((a, b) => nm(a).localeCompare(nm(b), 'zh-Hant'));
+const ME = 'TAP';
+
+function seg(host, opts, active, onPick) {
+  host.innerHTML = '';
+  opts.forEach(o => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.textContent = o.label;
+    b.setAttribute('aria-pressed', String(o.value === active));
+    b.addEventListener('click', () => onPick(o.value));
+    host.appendChild(b);
+  });
+}
+function showFig(setId, name) {
+  $$('#' + setId + ' > .figitem').forEach(f => {
+    f.classList.toggle('on', f.dataset.fig === name);
+  });
+}
+function badge(sig) {
+  return sig ? '<span class="badge yes">顯著</span>' : '<span class="badge no">不顯著</span>';
+}
+
+/* 刊頭 */
+(function () {
+  const p = $('#prov');
+  [['資料來源','OECD PUF'], ['輪次', CYCLES.join(' · ')],
+   ['學生', DATA.meta.nStudents.toLocaleString('en-US')],
+   ['國家', DATA.meta.nCountries], ['產生於', DATA.meta.generated]
+  ].forEach(([k, v]) => {
+    const dt = document.createElement('dt'); dt.textContent = k;
+    const dd = document.createElement('dd'); dd.textContent = v;
+    p.appendChild(dt); p.appendChild(dd);
+  });
+  $('#footGen').textContent = '產生於 ' + DATA.meta.generated;
+})();
+
+/* 分頁 */
+const TABS = [['overview','總覽'], ['desc','描述統計'], ['trend','趨勢'], ['link','連結誤差'],
+              ['country','各國比較'], ['equity','公平性'], ['method','方法學'], ['system','系統']];
+(function () {
+  const host = $('#tablist');
+  TABS.forEach(([id, label], i) => {
+    const b = document.createElement('button');
+    b.className = 'tab'; b.id = 't-' + id; b.type = 'button';
+    b.setAttribute('role', 'tab');
+    b.setAttribute('aria-selected', String(i === 0));
+    b.setAttribute('aria-controls', 'p-' + id);
+    b.innerHTML = '<span class="num">' + String(i + 1).padStart(2, '0') + '</span>' + label;
+    b.addEventListener('click', () => {
+      $$('.tab').forEach(t => t.setAttribute('aria-selected', 'false'));
+      $$('.panel').forEach(p => p.classList.remove('on'));
+      b.setAttribute('aria-selected', 'true');
+      $('#p-' + id).classList.add('on');
+      window.scrollTo({ top: 0 });
+    });
+    host.appendChild(b);
+  });
+})();
+
+/* 總覽 */
+(function () {
+  const flips = arr(DATA.trend).filter(r => r.p_naive < 0.05 && r.p_correct >= 0.05);
+  const total = arr(DATA.trend).length;
+  let mx = 1;
+  arr(DATA.trend).forEach(r => { if (r.se_naive > 0) mx = Math.max(mx, r.se_correct / r.se_naive); });
+
+  $('#tiles').innerHTML = [
+    ['輪次', CYCLES.length, CYCLES[0] + '–' + CYCLES[CYCLES.length - 1]],
+    ['學生', (DATA.meta.nStudents / 10000).toFixed(1) + ' 萬', '加權後代表全體 15 歲學生'],
+    ['國家與經濟體', DATA.meta.nCountries, '含 OECD 與夥伴國'],
+    ['合理推估值', '10', '每位學生每個領域'],
+    ['重複權重', '80', 'Fay 法，係數 0.5']
+  ].map(t => '<div class="tile"><div class="k">' + t[0] + '</div><div class="v">' + t[1] +
+    '</div><div class="n">' + t[2] + '</div></div>').join('');
+
+  $('#flipBig').textContent = flips.length + ' / ' + total;
+  $('#flipText').innerHTML = '在 ' + total + ' 組跨輪次比較中，有 <strong>' + flips.length +
+    ' 組</strong>若忽略連結誤差就會把不顯著的差異判成顯著。標準誤最多被低估 ' + mx.toFixed(1) + ' 倍。';
+
+  let h = '<thead><tr><th>領域</th>';
+  CYCLES.forEach(c => { h += '<th>' + c + '</th>'; });
+  h += '<th>2018→2022</th><th>檢定</th></tr></thead><tbody>';
+  DOMAINS.forEach(d => {
+    h += '<tr><td>' + DOMAIN_ZH[d] + '</td>';
+    CYCLES.forEach(c => {
+      const r = IDX['m' + key(ME, c, d)];
+      h += '<td>' + (r ? fmt(r.mean) + ' <span style="color:var(--ink-3)">(' + fmt(r.se, 2) + ')</span>' : '—') + '</td>';
+    });
+    const t = arr(DATA.trend).find(r => r.CNT === ME && r.domain === d && r.from === 2018);
+    if (t) {
+      h += '<td class="' + (t.diff > 0 ? 'deltapos' : 'deltaneg') + '">' +
+        (t.diff > 0 ? '+' : '') + fmt(t.diff) + '</td><td>' + badge(t.p_correct < 0.05) + '</td>';
+    } else h += '<td>—</td><td>—</td>';
+    h += '</tr>';
+  });
+  $('#twTable').innerHTML = h + '</tbody>';
+
+  const a = IDX['p' + key(ME, 2018, 'MATH')], b = IDX['p' + key(ME, 2022, 'MATH')];
+  if (a && b) $('#twSpread').innerHTML = '臺灣數學未達 Level 2 的比率從 ' + fmt(a.below_L2) +
+    '% 上升到 ' + fmt(b.below_L2) + '%，同一期間達 Level 5 以上的比率從 ' + fmt(a.above_L5) +
+    '% 上升到 ' + fmt(b.above_L5) + '%。兩端同時上升，代表分配拉開，而不是整體平移。';
+})();
+
+/* 趨勢表格 */
+let trDomain = 'MATH';
+function initTr() {
+  seg($('#trDomain'), DOMAINS.map(d => ({ value: d, label: DOMAIN_ZH[d] })),
+    trDomain, v => { trDomain = v; initTr(); });
+  let h = '<thead><tr><th>國家／經濟體</th>';
+  CYCLES.forEach(c => { h += '<th>' + c + '</th>'; });
+  h += '<th>2015→2022</th><th>2018→2022</th></tr></thead><tbody>';
+  const rows = ALL_CNT.map(c => ({ c: c, m: IDX['m' + key(c, 2022, trDomain)] }))
+    .filter(x => x.m).sort((a, b) => b.m.mean - a.m.mean);
+  rows.forEach(x => {
+    h += '<tr' + (x.c === ME ? ' class="me"' : '') + '><td>' + nm(x.c) + '</td>';
+    CYCLES.forEach(cy => {
+      const r = IDX['m' + key(x.c, cy, trDomain)];
+      h += '<td>' + (r ? fmt(r.mean) : '—') + '</td>';
+    });
+    [2015, 2018].forEach(fr => {
+      const t = arr(DATA.trend).find(r => r.CNT === x.c && r.domain === trDomain && r.from === fr);
+      if (!t) { h += '<td>—</td>'; return; }
+      h += '<td class="' + (t.diff > 0 ? 'deltapos' : 'deltaneg') + '">' +
+        (t.diff > 0 ? '+' : '') + fmt(t.diff) + (t.p_correct < 0.05 ? ' *' : '') + '</td>';
+    });
+    h += '</tr>';
+  });
+  $('#trendTable').innerHTML = h + '</tbody>';
+}
+
+/* 連結誤差 */
+let leState = { include: true, domain: 'MATH', from: 2018 };
+function initLE() {
+  seg($('#leDomain'), DOMAINS.map(d => ({ value: d, label: DOMAIN_ZH[d] })),
+    leState.domain, v => { leState.domain = v; initLE(); drawLE(); });
+  seg($('#leFrom'), [{ value: 2015, label: '2015' }, { value: 2018, label: '2018' }],
+    leState.from, v => { leState.from = v; initLE(); drawLE(); });
+}
+$('#leToggle').addEventListener('change', e => { leState.include = e.target.checked; drawLE(); });
+
+function drawLE() {
+  showFig('leFigs', 'linkerr_' + leState.domain.toLowerCase() + '_' + leState.from);
+  const inc = leState.include;
+  const rows = arr(DATA.trend).filter(r => r.domain === leState.domain && r.from === leState.from);
+  const le = rows.length ? rows[0].link_error : 0;
+  const nSig = rows.filter(r => (inc ? r.p_correct : r.p_naive) < 0.05).length;
+  const flips = rows.filter(r => r.p_naive < 0.05 && r.p_correct >= 0.05);
+  let mx = 1;
+  rows.forEach(r => { if (r.se_naive > 0) mx = Math.max(mx, r.se_correct / r.se_naive); });
+
+  $('#leTiles').innerHTML = [
+    ['連結誤差', fmt(le, 2), DOMAIN_ZH[leState.domain] + '　' + leState.from + ' → 2022'],
+    ['判為顯著', nSig + ' / ' + rows.length, inc ? '已納入連結誤差' : '未納入連結誤差'],
+    ['會翻盤的比較', flips.length, '忽略時判顯著，正確計算後不顯著'],
+    ['標準誤低估', '×' + mx.toFixed(2), '本組比較中的最大倍數']
+  ].map(t => '<div class="tile"><div class="k">' + t[0] + '</div><div class="v">' + t[1] +
+    '</div><div class="n">' + t[2] + '</div></div>').join('');
+
+  let h = '<thead><tr><th>國家／經濟體</th><th>' + leState.from + '</th><th>2022</th><th>變化</th>' +
+    '<th>SE 忽略</th><th>p 忽略</th><th>SE 正確</th><th>p 正確</th><th>結論</th></tr></thead><tbody>';
+  if (!flips.length) {
+    h += '<tr><td colspan="9" style="text-align:center;color:var(--ink-3);font-family:var(--sans)">' +
+      '此組比較中沒有因連結誤差而翻盤的案例</td></tr>';
+  } else {
+    flips.sort((a, b) => a.p_correct - b.p_correct).forEach(r => {
+      h += '<tr' + (r.CNT === ME ? ' class="me"' : '') + '><td>' + nm(r.CNT) + '</td>' +
+        '<td>' + fmt(r.m1) + '</td><td>' + fmt(r.m2) + '</td>' +
+        '<td class="' + (r.diff > 0 ? 'deltapos' : 'deltaneg') + '">' +
+        (r.diff > 0 ? '+' : '') + fmt(r.diff) + '</td>' +
+        '<td>' + fmt(r.se_naive, 2) + '</td><td>' + fmt(r.p_naive, 4) + '</td>' +
+        '<td>' + fmt(r.se_correct, 2) + '</td><td>' + fmt(r.p_correct, 4) + '</td>' +
+        '<td><span class="badge flip">翻盤</span></td></tr>';
+    });
+  }
+  $('#flipTable').innerHTML = h + '</tbody>';
+}
+
+(function () {
+  let h = '<thead><tr><th>比較</th><th>數學</th><th>閱讀</th><th>科學</th><th>財金素養</th></tr></thead><tbody>';
+  arr(DATA.linkErrors).forEach(r => {
+    h += '<tr><td>PISA ' + r.from + ' → 2022</td>';
+    ['MATH','READ','SCIE','FLIT'].forEach(d => {
+      const v = r[d];
+      h += '<td>' + (v === null || v === undefined
+        ? '<span style="color:var(--ink-3)">不可比較</span>' : fmt(v, 2)) + '</td>';
+    });
+    h += '</tr>';
+  });
+  $('#leTable').innerHTML = h + '</tbody>';
+})();
+
+/* 各國比較 */
+let ctyState = { cycle: 2022, domain: 'MATH', sort: 'mean', dir: -1 };
+function initCty() {
+  seg($('#ctyDomain'), DOMAINS.map(d => ({ value: d, label: DOMAIN_ZH[d] })),
+    ctyState.domain, v => { ctyState.domain = v; initCty(); drawCty(); });
+  seg($('#ctyCycle'), CYCLES.map(c => ({ value: c, label: String(c) })),
+    ctyState.cycle, v => { ctyState.cycle = v; initCty(); drawCty(); });
+}
+function drawCty() {
+  showFig('rankFigs', 'rank_' + ctyState.domain.toLowerCase());
+  const rows = [];
+  ALL_CNT.forEach(c => {
+    const m = IDX['m' + key(c, ctyState.cycle, ctyState.domain)];
+    if (!m || m.mean === null) return;
+    const p = IDX['p' + key(c, ctyState.cycle, ctyState.domain)];
+    const g = IDX['g' + key(c, ctyState.cycle, ctyState.domain)];
+    const e = IDX['e' + key(c, ctyState.cycle, ctyState.domain)];
+    rows.push({ CNT: c, name: nm(c), mean: m.mean, se: m.se, n: m.n,
+      below: p ? p.below_L2 : null, above: p ? p.above_L5 : null,
+      gap: g ? g.gap : null, slope: e ? e.slope : null });
+  });
+  rows.sort((a, b) => {
+    const k = ctyState.sort, av = a[k], bv = b[k];
+    if (av === null) return 1;
+    if (bv === null) return -1;
+    return typeof av === 'string'
+      ? ctyState.dir * av.localeCompare(bv, 'zh-Hant') : ctyState.dir * (av - bv);
+  });
+  const cols = [['name','國家／經濟體'], ['mean','平均'], ['se','SE'],
+                ['below','未達 L2 %'], ['above','L5 以上 %'],
+                ['gap','性別差距'], ['slope','ESCS 斜率'], ['n','樣本數']];
+  let h = '<thead><tr><th>#</th>';
+  cols.forEach(([k, lab]) => {
+    const on = ctyState.sort === k;
+    h += '<th class="sortable" data-k="' + k + '"' +
+      (on ? ' aria-sort="' + (ctyState.dir < 0 ? 'descending' : 'ascending') + '"' : '') +
+      '>' + lab + '<span class="arrow">' + (on ? (ctyState.dir < 0 ? '▼' : '▲') : '⇅') + '</span></th>';
+  });
+  h += '</tr></thead><tbody>';
+  rows.forEach((r, i) => {
+    h += '<tr' + (r.CNT === ME ? ' class="me"' : '') + '><td>' + (i + 1) + '</td><td>' + r.name + '</td>' +
+      '<td>' + fmt(r.mean) + '</td><td>' + fmt(r.se, 2) + '</td>' +
+      '<td>' + fmt(r.below) + '</td><td>' + fmt(r.above) + '</td>' +
+      '<td class="' + (r.gap > 0 ? 'deltapos' : r.gap < 0 ? 'deltaneg' : '') + '">' +
+      (r.gap === null ? '—' : (r.gap > 0 ? '+' : '') + fmt(r.gap)) + '</td>' +
+      '<td>' + fmt(r.slope) + '</td><td>' + (r.n ? r.n.toLocaleString('en-US') : '—') + '</td></tr>';
+  });
+  $('#ctyTable').innerHTML = h + '</tbody>';
+  $$('#ctyTable th.sortable').forEach(th => {
+    th.addEventListener('click', () => {
+      const k = th.dataset.k;
+      if (ctyState.sort === k) ctyState.dir *= -1;
+      else { ctyState.sort = k; ctyState.dir = (k === 'name') ? 1 : -1; }
+      drawCty();
+    });
+  });
+}
+
+/* 公平性 */
+let eqDomain = 'MATH';
+function initEq() {
+  seg($('#eqDomain'), DOMAINS.map(d => ({ value: d, label: DOMAIN_ZH[d] })),
+    eqDomain, v => { eqDomain = v; initEq(); drawEq(); });
+}
+function drawEq() {
+  const d = eqDomain.toLowerCase();
+  showFig('escsFigs', 'escs_' + d);
+  showFig('profFigs', 'prof_' + d);
+  showFig('gapFigs',  'gap_'  + d);
+}
+
+initTr(); initLE(); drawLE(); initCty(); drawCty(); initEq(); drawEq();
+
+/*__DL_JS__*/
+</script>

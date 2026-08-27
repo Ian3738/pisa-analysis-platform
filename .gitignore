@@ -1,0 +1,26 @@
+# ---- 資料 ----
+# 體積龐大且可從 OECD 官方網址重新取得，不納入版本控制
+# 排除 raw/ 的內容但保留來源稽核清單（網址、位元組數、SHA-256）
+raw/*
+!raw/manifest.csv
+parquet/
+staging/
+warehouse/
+logs/
+
+# ---- 建置產物 ----
+# Word 報告的 base64，僅供 Artifact 版內嵌
+web/report_b64.txt
+# Artifact 版網頁（約 8 MB，含內嵌 base64）
+web/pisa-platform.html
+# Pages 版建置輸出；發布副本在 docs/index.html
+web/index-pages.html
+# 發布副本在 docs/PISA-analysis-report-APA7.docx
+output/*.docx
+
+# ---- R / macOS ----
+.Rhistory
+.RData
+.Rproj.user/
+*.Rproj
+.DS_Store

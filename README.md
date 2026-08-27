@@ -1,0 +1,148 @@
+# PISA 量尺與誤差
+
+PISA 2015–2022 國際學生能力評量的分析平台。從 OECD 官方檔案伺服器下載、轉檔、
+建立倉儲，到以複雜抽樣權重進行估計、產出圖表與 APA 第七版報告，全程可重複執行。
+
+**線上平台：** https://ian3738.github.io/pisa-analysis-platform/
+
+## 這個專案在做什麼
+
+PISA 資料有兩個地方容易做錯，而且錯了不會報錯：
+
+1. **標準誤只算了一半。** 學生能力不是實測值，而是從後驗分配抽出的 10 個合理推估值
+   （plausible values）。只取一個推估值、或先把 10 個平均再當觀測值，都會遺漏推估變異。
+   加上複雜抽樣設計本身的效應，正確的標準誤必須同時包含兩者。
+
+2. **跨輪次比較漏掉連結誤差。** 各輪分數雖在同一量尺上，但量尺連結本身有不確定性。
+   本專案實測：在 396 組跨輪比較中，有 16 組忽略連結誤差就會把不顯著的差異判成顯著，
+   標準誤最多被低估至 2.44 倍。
+
+本專案把這兩件事做對，並把過程完整寫下來。
+
+## 現況
+
+| 項目 | 內容 |
+|---|---|
+| 輪次 | PISA 2015、2018、2022（學生檔 + 學校檔） |
+| 選考領域 | 2022 創造思考（63 國）、財金素養（20 國） |
+| 樣本 | 1,745,082 名學生，98 個國家與經濟體 |
+| 儲存 | 632 MB Parquet（原始 `.sav` 合計約 6 GB） |
+| 倉儲 | DuckDB，view 直接查 Parquet |
+| 估計 | 10 個合理推估值 × 80 組 Fay BRR 重複權重 |
+| 驗證 | 三方交叉驗證：自建核心、`intsvy`、`survey` 複雜抽樣程序完全一致 |
+| 圖表 | 48 張 SVG（亮暗各一版）+ 24 張 200 dpi PNG，全部由 ggplot2 產出 |
+| 報告 | APA 第七版 Word 檔，24 圖、5 表，每項均附研究結果說明 |
+
+## 幾個實測結果
+
+**加權不是小數點後的問題。** PISA 2022 數學，80 個國家與經濟體的加權與未加權平均
+差異中位數為 2.07 分，最大 20.60 分（泰國）。臺灣是正向差異最大者：未加權 534.0，
+加權後 547.1，相差 13.1 分。
+
+**基期選擇會改變結論。** 臺灣三個領域自 2018 年到 2022 年的進步均達統計顯著；
+但以 2015 年為基期，數學（+4.8, p = .39）與科學（+5.0, p = .26）都不顯著。
+2018 年是三輪中的低點。
+
+**成績上升與公平性未同步。** 臺灣數學的社經梯度自 2018 年的 38.1 分升至 2022 年的
+49.3 分（每一個 ESCS 標準差），高於全體中位數 33.3 分。同期數學未達 Level 2 的比率
+自 13.98% 升至 14.61%，Level 5 以上者自 23.19% 升至 31.73%——兩端同時擴大。
+
+## 目錄結構
+
+```
+.
+├── R/
+│   ├── 00_config.R           路徑、來源清單、BRR 參數、rebuild_all()
+│   ├── 01_download.R         下載與 SHA-256 校驗
+│   ├── 02_extract_convert.R  解壓、變數字典、抽欄、轉 Parquet
+│   ├── 03_harmonise.R        跨輪對齊、trend ESCS、選考領域併檔
+│   ├── 04_warehouse.R        DuckDB view 與品質檢核表
+│   ├── 05_analysis.R         平均、精熟等級、社經梯度、性別差距
+│   ├── 06_trend.R            跨輪比較（含連結誤差）
+│   ├── 07_run_trend.R        一次跑完趨勢分析
+│   ├── 08_export_web.R       產出網站用的估計結果 JSON
+│   ├── 09_figures.R          產出全部圖表（SVG + PNG）
+│   ├── 10_report_docx.R      產出 APA 第七版 Word 報告
+│   ├── build_site.py         組裝網站
+│   └── lib_pisa.R            估計核心（三方驗證）
+├── docs/                     GitHub Pages 來源目錄
+│   ├── index.html            分析平台網站
+│   ├── PISA-analysis-report-APA7.docx
+│   ├── methodology.md        方法學：縱貫分析的限制、複雜抽樣、連結誤差
+│   └── architecture.md       系統架構與擴充方式
+├── web/
+│   ├── template.html         網站樣板
+│   ├── figs/                 48 張 SVG（亮暗各一版）
+│   ├── png/                  24 張 200 dpi PNG（Word 報告用）
+│   ├── pisa_data.json        全部估計結果
+│   └── country_zh.json       國名中文對照
+├── output/                   分析結果 CSV
+└── deploy.sh                 建置並複製到 docs/
+```
+
+## 從零重建
+
+資料檔未納入版本控制（原始 zip 約 1.9 GB）。首次執行會自動從 OECD 官方
+檔案伺服器下載：
+
+```bash
+# 1. 下載、轉檔、建立 DuckDB 倉儲（約 15 分鐘，視網速）
+Rscript -e 'source("R/00_config.R"); rebuild_all()'
+
+# 2. 產出網站用的估計結果（80 國 × 3 輪 × 3 領域，約 7 分鐘）
+Rscript R/08_export_web.R
+
+# 3. 產出全部圖表：網頁用 SVG + Word 用 200 dpi PNG（約 13 分鐘）
+Rscript -e 'source("R/09_figures.R"); build_all_figures()'
+
+# 4. 產出 APA 第七版 Word 報告
+Rscript -e 'source("R/10_report_docx.R"); build_report()'
+
+# 5. 建置網站並複製到 docs/
+./deploy.sh
+```
+
+需要的 R 套件：`data.table`、`arrow`、`duckdb`、`haven`、`survey`、`intsvy`、
+`ggplot2`、`svglite`、`ragg`、`officer`、`flextable`、`jsonlite`、`systemfonts`。
+
+## 快速開始（不重建，直接分析）
+
+```r
+source("R/05_analysis.R")
+
+# 臺灣 2022 數學平均（含正確標準誤）
+tw <- load_stu(2022, "TAP")
+pisa_pv_stat(tw, pv_names("MATH", 10))
+#> estimate 547.09   se 3.78   (抽樣 3.728 / 推估 0.611)
+
+# 跨輪次比較——務必納入連結誤差
+source("R/06_trend.R")
+get_link_error(2018, 2022, "MATH")   #> 2.24
+pisa_trend_diff(531.1, 2.89, 547.1, 3.78, get_link_error(2018, 2022, "MATH"))
+```
+
+## 資料來源與授權
+
+分析資料為 OECD 發布的 PISA 公開使用檔（Public Use Files），著作權屬 OECD 所有，
+本專案不重新散布原始資料，僅提供取得與處理的程式。連結誤差數值取自
+PISA 2022 技術報告 Annex Table 14.A.19，精熟等級切點取自同報告 Annex Tables
+17.A.2、17.A.12、17.A.13、17.A.14。
+
+- OECD (2023). *PISA 2022 results (Volume I)*. https://doi.org/10.1787/53f23881-en
+- OECD (2024). *PISA 2022 technical report*. https://doi.org/10.1787/01820d6d-en
+
+## 已知限制
+
+**PISA 不能做個人層次的縱貫分析。** 它是重複橫斷設計，每輪抽取不同的 15 歲學生，
+沒有任何學生被重複測量。潛在成長模型、交叉延宕模型、個體固定效果模型皆不適用。
+詳見 [docs/methodology.md](docs/methodology.md)。
+
+**2012 以前的輪次無法自動取得。** OECD 於 2024 年改版官網，舊網址全部失效，
+新的資料集頁面啟用了人機驗證。需以瀏覽器手動下載，且提供的是 ASCII 定寬檔
+加上 SPSS 讀取語法。詳見 [docs/architecture.md](docs/architecture.md)。
+
+**ESCS 只能回溯到 2012。** 該指標於 2022 年重新校準，OECD 另發布的 trend ESCS
+僅涵蓋 2012、2015、2018 三輪。
+
+**PISA 2025** 首波結果預定 2026 年 9 月 8 日發布，屆時在來源清單加一列網址、
+重跑流程、更新連結誤差表即可納入。
