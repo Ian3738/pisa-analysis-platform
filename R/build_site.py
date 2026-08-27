@@ -16,6 +16,8 @@ import argparse, json, re, pathlib, sys
 ROOT = pathlib.Path.home() / "PISA" / "web"
 FIGS = ROOT / "figs"
 
+FONT_STACK = '"Noto Sans TC", "PingFang TC", "Microsoft JhengHei", "Heiti TC", sans-serif'
+
 DOCX_ASCII = "PISA-analysis-report-APA7.docx"   # 網址用 ASCII 檔名，避免編碼問題
 DOCX_ZH    = "PISA分析報告_APA7.docx"           # download 屬性指定另存時的中文檔名
 
@@ -34,6 +36,10 @@ def load_svg(name, mode):
     s = s.replace("class='svglite'", f"class='svglite {uid}'", 1)
     s = re.sub(r"\.svglite\b", f".{uid}", s)
     s = re.sub(r"(<svg\b)", r"\1 preserveAspectRatio='xMidYMid meet' role='img'", s, count=1)
+    # svglite 會把本機解析到的實體字型家族名寫死（macOS 上是 PingFang HK），
+    # 在 Windows／Linux 上會 fallback，也用不到頁面已載入的 Noto Sans TC。
+    # 改寫成完整字型堆疊，讓各平台都有合理結果。
+    s = re.sub(r'font-family:\s*"[^"]*"\s*;', f"font-family: {FONT_STACK};", s)
     return s.strip()
 
 
