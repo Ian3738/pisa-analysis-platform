@@ -101,6 +101,20 @@ a { color:var(--accent); text-underline-offset:2px; }
 .tab[aria-selected="true"] { color:var(--accent); border-bottom-color:var(--accent); }
 .tab .num { font-family:var(--mono); font-size:.7rem; opacity:.55; margin-right:6px; }
 
+/* ---------- 分頁說明帶 ---------- */
+.ctxbar { background:var(--surface); border-bottom:1px solid var(--rule); }
+.ctxbar-in { display:grid; grid-template-columns:repeat(3, minmax(0,1fr));
+             gap:0 28px; padding-block:14px 15px; }
+@media (max-width:820px){ .ctxbar-in{ grid-template-columns:1fr; gap:12px; } }
+.ctx-item { min-width:0; }
+.ctx-k { font-family:var(--mono); font-size:.64rem; letter-spacing:.14em;
+         text-transform:uppercase; color:var(--accent); margin-bottom:3px;
+         display:flex; align-items:center; gap:6px; }
+.ctx-k::before { content:""; width:4px; height:4px; border-radius:50%; background:var(--accent); }
+.ctx-v { font-size:.86rem; color:var(--ink); line-height:1.55; }
+.ctx-v .n { font-family:var(--mono); font-variant-numeric:tabular-nums; }
+.ctx-v em { font-style:normal; color:var(--accent); font-weight:700; }
+
 .panel { display:none; padding-block:36px 72px; }
 .panel.on { display:block; }
 .sec { border-top:1px solid var(--rule-soft); padding-top:26px; margin-top:38px; }
@@ -233,6 +247,10 @@ footer .fl { display:flex; flex-wrap:wrap; gap:6px 24px; }
 <nav class="tabs" aria-label="主要區段">
   <div class="wrap tabs-in" role="tablist" id="tablist"></div>
 </nav>
+
+<div class="ctxbar">
+  <div class="wrap ctxbar-in" id="ctxBar"></div>
+</div>
 
 <main class="wrap">
 
@@ -38333,9 +38351,68 @@ function badge(sig) {
 })();
 
 /* 分頁 */
-const TABS = [['overview','總覽'], ['desc','描述統計'], ['trend','趨勢'], ['link','連結誤差'],
-              ['country','各國比較'], ['equity','公平性'], ['school','學校層級'],
-              ['extra','選考領域'], ['timss','IEA 評比'], ['method','方法學'], ['system','系統']];
+const TABS = [
+  ['overview','總覽'],            ['desc','PISA 描述統計'],   ['trend','PISA 趨勢'],
+  ['link','PISA 連結誤差'],       ['country','PISA 各國比較'], ['equity','PISA 公平性'],
+  ['school','PISA 學校層級'],     ['extra','PISA 選考領域'],
+  ['timss','TIMSS · PIRLS · ICCS'], ['method','方法學'],      ['system','系統']];
+
+/* 每個分頁的「用什麼資料、回答什麼問題、結論是什麼」 */
+const TAB_CTX = {
+  overview: {
+    d: 'PISA 2015／2018／2022　<span class="n">174.5 萬</span>名學生 · <span class="n">98</span> 個經濟體',
+    q: '這個平台涵蓋什麼？為什麼 PISA 的標準誤容易算錯？',
+    f: '在 <span class="n">396</span> 組跨輪次比較中，<em>16 組</em>忽略連結誤差就會把不顯著的差異判成顯著'},
+  desc: {
+    d: 'PISA 2022 全體 <span class="n">80</span> 國，加上臺灣三輪的分數與 ESCS 分布',
+    q: '加權與不加權差多少？分數與家庭社經地位怎麼分布？',
+    f: '臺灣是加權效果最大的國家：未加權 <span class="n">534.0</span>，加權後 <em>547.1</em>，相差 13.1 分'},
+  trend: {
+    d: 'PISA 2015／2018／2022 三輪次的平均分數與信賴區間',
+    q: '臺灣的表現在動嗎？往哪個方向？',
+    f: '2018→2022 三領域皆顯著進步；但以 2015 為基期，<em>數學與科學都不顯著</em>'},
+  link: {
+    d: 'PISA 跨輪次比較：3 領域 × 2 基期 × 各國，共 <span class="n">396</span> 組',
+    q: '跨輪次比較漏掉連結誤差，結論會差多少？',
+    f: '<em>16 組</em>結論翻盤，標準誤最多被低估至 <span class="n">2.44</span> 倍'},
+  country: {
+    d: 'PISA 2022 全體 <span class="n">80</span> 個國家與經濟體',
+    q: '臺灣在國際上的位置？各國的成績分布如何？',
+    f: '臺灣數學第 <em>3</em>、科學第 <em>4</em>、閱讀第 <em>5</em> 名'},
+  equity: {
+    d: 'PISA 2022 社經梯度、精熟等級與性別差距（ESCS 採官方 trend 版本）',
+    q: '成績提升有沒有伴隨教育機會均等？',
+    f: '臺灣社經梯度自 2018 年的 <span class="n">38.1</span> 升至 <em>49.3</em> 分／SD，高於全體中位數 33.3'},
+  school: {
+    d: 'PISA 2015／2018／2022 學生嵌套於學校的變異數分解',
+    q: '成績差異有多少來自「讀哪一所學校」而非個人？',
+    f: '臺灣校間差異占 <em>40.5%</em>，其中 <span class="n">71.2%</span> 對應到學校的社經組成'},
+  extra: {
+    d: 'PISA 2022 創造思考（<span class="n">63</span> 國）、財金素養（<span class="n">20</span> 國）、數學八個分測驗',
+    q: '核心三領域之外，臺灣的樣貌是什麼？',
+    f: '數學排第 3，<em>創造思考只排第 16</em>；八個數學分測驗只差 5.3 分，輪廓異常平坦'},
+  timss: {
+    d: 'TIMSS 2023 四／八年級、PIRLS 2021 四年級閱讀、ICCS 2022 公民知識',
+    q: '換一套主辦單位、換一種測驗取向，結論會一樣嗎？',
+    f: '公民知識 <em>第 1</em>、數理第 2–3，但四年級閱讀第 <em>15</em>、創造思考第 <em>16</em>'},
+  method: {
+    d: '方法說明（不含資料分析）',
+    q: '這些估計是怎麼算的？哪些分析 PISA 根本做不到？',
+    f: 'PISA 是重複橫斷設計，<em>不能做個人層次的縱貫分析</em>'},
+  system: {
+    d: '系統說明（不含資料分析）',
+    q: '整套流程怎麼跑？要加新的資料庫該改哪裡？',
+    f: '五套評比、<em>兩套估計核心</em>：Fay BRR 與 JK2 折刀不可混用'}
+};
+
+function drawCtx(id) {
+  const c = TAB_CTX[id];
+  if (!c) { $('#ctxBar').innerHTML = ''; return; }
+  $('#ctxBar').innerHTML =
+    '<div class="ctx-item"><div class="ctx-k">目前資料</div><div class="ctx-v">' + c.d + '</div></div>' +
+    '<div class="ctx-item"><div class="ctx-k">回答的問題</div><div class="ctx-v">' + c.q + '</div></div>' +
+    '<div class="ctx-item"><div class="ctx-k">主要發現</div><div class="ctx-v">' + c.f + '</div></div>';
+}
 (function () {
   const host = $('#tablist');
   TABS.forEach(([id, label], i) => {
@@ -38350,10 +38427,12 @@ const TABS = [['overview','總覽'], ['desc','描述統計'], ['trend','趨勢']
       $$('.panel').forEach(p => p.classList.remove('on'));
       b.setAttribute('aria-selected', 'true');
       $('#p-' + id).classList.add('on');
+      drawCtx(id);
       window.scrollTo({ top: 0 });
     });
     host.appendChild(b);
   });
+  drawCtx('overview');
 })();
 
 /* 總覽 */
