@@ -429,6 +429,64 @@ footer .fl { display:flex; flex-wrap:wrap; gap:6px 24px; }
     </div>
   </section>
 
+  <!-- ============ 學校層級 ============ -->
+  <section class="panel" id="p-school" role="tabpanel" aria-labelledby="t-school">
+    <div class="sec">
+      <div class="eyebrow">學生嵌套於學校</div>
+      <h2>成績差異有多少來自「讀哪一所學校」</h2>
+      <p class="lead">學生的成績差異可以精確拆成兩塊：同一所學校之內的差異，與學校之間的差異。後者占比越高，代表教育機會越取決於就讀的學校而非個人。</p>
+      <div class="controls">
+        <div class="ctl-group"><span class="ctl-label">領域</span>
+          <div class="seg" id="schDomain" role="group" aria-label="選擇領域"></div></div>
+      </div>
+      <div class="tiles" id="schTiles" style="margin-bottom:26px"></div>
+    </div>
+
+    <div class="stack">
+      <figure>
+        <div class="figbox"><!--FIG:trend_icc--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 加權變異數分解</div>
+        <figcaption>臺灣數學的校間差異比例自 2018 年的 33.8% 升至 2022 年的 40.5%。芬蘭長期維持在 12% 上下，是綜合型學制的代表。</figcaption>
+      </figure>
+
+      <figure>
+        <div class="figbox figset" id="iccFigs"><!--FIGSET:icc--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 校間變異占總變異</div>
+        <figcaption>分解為恆等式：校間 + 校內 = 總變異。實作已與單因子變異數分析的平方和逐項比對驗證（誤差量級 10⁻¹¹）。</figcaption>
+      </figure>
+
+      <figure>
+        <div class="figbox figset" id="r2bFigs"><!--FIGSET:r2b--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 校層加權迴歸 R²</div>
+        <figcaption>校間差異中，有多少對應到學生組成的社經落差。數值高代表學校之間的成績落差幾乎就是社經落差的投影。</figcaption>
+      </figure>
+
+      <figure>
+        <div class="figbox figset" id="mundFigs"><!--FIGSET:mundlak--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · Mundlak 校內／校間分解</div>
+        <figcaption>把學生 ESCS 拆成「與同校同學的差距」與「該校的平均社經水準」。兩者係數之差即脈絡效應：同一個學生，換到社經背景較好的學校能多得幾分。</figcaption>
+      </figure>
+    </div>
+
+    <div class="sec">
+      <h2>各國數值</h2>
+      <p class="lead">點欄位標題可排序。臺灣以底色標示。</p>
+      <div class="tablewrap"><table id="schTable"></table></div>
+    </div>
+
+    <div class="sec">
+      <div class="eyebrow">方法交叉驗證</div>
+      <h2>兩種估計標的，不該混為一談</h2>
+      <div class="prose">
+        <p>同一份臺灣 2022 數學資料，本平台的設計基礎分解得 ICC = 0.405，Mplus 的兩層隨機效果模型得 0.422（預設權重縮放）或 0.455（不縮放）。三者並非彼此矛盾，而是在估計不同的量。</p>
+        <p><strong>設計基礎分解</strong>回答的是描述性問題：在全體 15 歲學生的成績變異中，有多少比例落在學校之間。它使用完整抽樣權重，且校間與校內恆等相加為總變異。OECD 報告中的「校間變異百分比」採此定義。</p>
+        <p><strong>模型基礎的變異成分</strong>是階層模型中的潛在參數，其總和不必等於觀測變異，且會隨權重縮放方式改變。Mplus 的 <code>TYPE = TWOLEVEL</code> 預設會在叢集內重新縮放權重。</p>
+        <p>迴歸係數的一致性則高得多：Mundlak 分解在 R 得校內效應 20.8、學校組成效應 131.6；Mplus 兩層模型得 19.9 與 125.0。差異來自 Mplus 僅用單一個推估值，且校層採隨機效果設定。</p>
+        <p>Mplus 空模型的校間殘差變異自 5,537 降至 1,485，即學校社經組成解釋了 73.2% 的校間差異；本平台的加權 R² 對同一問題給出 71.2%。兩條獨立路徑收斂到同一結論。</p>
+      </div>
+    </div>
+  </section>
+
   <!-- ============ 方法學 ============ -->
   <section class="panel" id="p-method" role="tabpanel" aria-labelledby="t-method">
     <div class="sec">
@@ -590,6 +648,7 @@ footer .fl { display:flex; flex-wrap:wrap; gap:6px 24px; }
 <script>
 const DATA = /*__PISA_DATA__*/ null /*__END__*/;
 const ZH   = /*__ZH_DATA__*/ {} /*__END__*/;
+const SCHOOL = /*__SCHOOL_DATA__*/ null /*__END__*/;
 
 const $  = (s, r) => (r || document).querySelector(s);
 const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
@@ -658,7 +717,8 @@ function badge(sig) {
 
 /* 分頁 */
 const TABS = [['overview','總覽'], ['desc','描述統計'], ['trend','趨勢'], ['link','連結誤差'],
-              ['country','各國比較'], ['equity','公平性'], ['method','方法學'], ['system','系統']];
+              ['country','各國比較'], ['equity','公平性'], ['school','學校層級'],
+              ['method','方法學'], ['system','系統']];
 (function () {
   const host = $('#tablist');
   TABS.forEach(([id, label], i) => {
@@ -882,7 +942,82 @@ function drawEq() {
   showFig('gapFigs',  'gap_'  + d);
 }
 
-initTr(); initLE(); drawLE(); initCty(); drawCty(); initEq(); drawEq();
+/* 學校層級 */
+let schDomain = 'MATH';
+const SIDX = {};
+arr(SCHOOL.icc).forEach(r => { SIDX['i' + key(r.CNT, r.cycle, r.domain)] = r; });
+arr(SCHOOL.r2b).forEach(r => { SIDX['r' + key(r.CNT, r.cycle, r.domain)] = r; });
+arr(SCHOOL.mund).forEach(r => { SIDX['u' + key(r.CNT, r.domain)] = r; });
+
+let schSort = 'icc', schDir = -1;
+function initSch() {
+  seg($('#schDomain'), DOMAINS.map(d => ({ value: d, label: DOMAIN_ZH[d] })),
+    schDomain, v => { schDomain = v; initSch(); drawSch(); });
+}
+function drawSch() {
+  const d = schDomain.toLowerCase();
+  showFig('iccFigs', 'icc_' + d);
+  showFig('r2bFigs', 'r2b_' + d);
+  showFig('mundFigs', 'mundlak_' + d);
+
+  const me18 = SIDX['i' + key(ME, 2018, schDomain)], me22 = SIDX['i' + key(ME, 2022, schDomain)];
+  const r22 = SIDX['r' + key(ME, 2022, schDomain)], u22 = SIDX['u' + key(ME, schDomain)];
+  $('#schTiles').innerHTML = [
+    ['臺灣校間差異', me22 ? (100 * me22.icc).toFixed(1) + '%' : '—',
+     me18 ? '2018 年為 ' + (100 * me18.icc).toFixed(1) + '%' : ''],
+    ['社經組成解釋', r22 ? (100 * r22.r2).toFixed(1) + '%' : '—', '占校間差異的比例'],
+    ['校內個人效應', u22 ? fmt(u22.b_within) : '—', '分／每一個 ESCS 標準差'],
+    ['學校組成效應', u22 ? fmt(u22.b_school) : '—', '分／每一個 ESCS 標準差'],
+    ['脈絡效應', u22 ? fmt(u22.contextual) : '—', '兩者之差']
+  ].map(t => '<div class="tile"><div class="k">' + t[0] + '</div><div class="v">' + t[1] +
+    '</div><div class="n">' + t[2] + '</div></div>').join('');
+
+  const rows = [];
+  ALL_CNT.forEach(c => {
+    const i = SIDX['i' + key(c, 2022, schDomain)];
+    if (!i) return;
+    const r = SIDX['r' + key(c, 2022, schDomain)];
+    const u = SIDX['u' + key(c, schDomain)];
+    rows.push({ CNT: c, name: nm(c), icc: i.icc, se: i.se, n_sch: i.n_sch,
+      r2: r ? r.r2 : null, bw: u ? u.b_within : null,
+      bs: u ? u.b_school : null, ctx: u ? u.contextual : null });
+  });
+  rows.sort((a, b) => {
+    const av = a[schSort], bv = b[schSort];
+    if (av === null) return 1;
+    if (bv === null) return -1;
+    return typeof av === 'string' ? schDir * av.localeCompare(bv, 'zh-Hant') : schDir * (av - bv);
+  });
+  const cols = [['name','國家／經濟體'], ['icc','校間差異 %'], ['se','SE'],
+                ['r2','社經解釋 %'], ['bw','校內效應'], ['bs','學校組成效應'],
+                ['ctx','脈絡效應'], ['n_sch','學校數']];
+  let h = '<thead><tr><th>#</th>';
+  cols.forEach(([k, lab]) => {
+    const on = schSort === k;
+    h += '<th class="sortable" data-k="' + k + '"' +
+      (on ? ' aria-sort="' + (schDir < 0 ? 'descending' : 'ascending') + '"' : '') +
+      '>' + lab + '<span class="arrow">' + (on ? (schDir < 0 ? '▼' : '▲') : '⇅') + '</span></th>';
+  });
+  h += '</tr></thead><tbody>';
+  rows.forEach((r, i) => {
+    h += '<tr' + (r.CNT === ME ? ' class="me"' : '') + '><td>' + (i + 1) + '</td><td>' + r.name + '</td>' +
+      '<td>' + fmt(100 * r.icc) + '</td><td>' + fmt(100 * r.se, 2) + '</td>' +
+      '<td>' + (r.r2 === null ? '—' : fmt(100 * r.r2)) + '</td>' +
+      '<td>' + fmt(r.bw) + '</td><td>' + fmt(r.bs) + '</td><td>' + fmt(r.ctx) + '</td>' +
+      '<td>' + r.n_sch + '</td></tr>';
+  });
+  $('#schTable').innerHTML = h + '</tbody>';
+  $$('#schTable th.sortable').forEach(th => {
+    th.addEventListener('click', () => {
+      const k = th.dataset.k;
+      if (schSort === k) schDir *= -1;
+      else { schSort = k; schDir = (k === 'name') ? 1 : -1; }
+      drawSch();
+    });
+  });
+}
+
+initTr(); initLE(); drawLE(); initCty(); drawCty(); initEq(); drawEq(); initSch(); drawSch();
 
 /*__DL_JS__*/
 </script>

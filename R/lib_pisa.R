@@ -229,3 +229,91 @@ get_link_error <- function(from_cycle, to_cycle = 2022, domain) {
                      " 尚非主測領域，OECD 明示不可與 2022 比較")
   v
 }
+
+# ---- 校間／校內變異數分解 -------------------------------------------------
+# 學生嵌套於學校，總變異可精確拆成兩塊（全變異數分解律）：
+#   Var_total = Σw(x−gm)²/Σw
+#   Between   = Σ_g W_g(m_g−gm)²/Σw       學校平均數之間的加權變異
+#   Within    = Σ_g Σ_i w_i(x_i−m_g)²/Σw  校內離差的加權平均
+#   ICC       = Between / Total
+#
+# ICC 是大型評比中最常引用的公平性指標之一：數值越高，代表學生成績越取決於
+# 他讀哪一所學校。分流體制、學區房價差距大的系統通常偏高。
+#
+# 以 rowsum() 而非 data.table 分組，因為此函式要被呼叫 10×81 次／每國。
+vdecomp_raw <- function(x, w, g) {
+  ok <- is.finite(x) & is.finite(w) & !is.na(g)
+  if (sum(ok) < 30L) return(c(total = NA_real_, between = NA_real_,
+                              within = NA_real_, icc = NA_real_))
+  x <- x[ok]; w <- w[ok]; g <- g[ok]
+  sw <- sum(w); gm <- sum(x * w) / sw
+  tot <- sum(w * (x - gm)^2) / sw
+  Wg  <- rowsum(w, g, reorder = FALSE)
+  mg  <- rowsum(x * w, g, reorder = FALSE) / Wg
+  btw <- sum(Wg * (mg - gm)^2) / sw
+  c(total = tot, between = btw, within = tot - btw, icc = btw / tot)
+}
+
+# PV × BRR 版本：四個成分一次估完，共用同一批重複權重迴圈
+pisa_vdecomp <- function(data, pv_vars, sch = "CNTSCHID",
+                         w = "W_FSTUWT", rw_prefix = "W_FSTURWT",
+                         G = 80, fay = 0.5) {
+  data <- as.data.table(data)
+  M <- length(pv_vars)
+  g <- data[[sch]]
+  wv <- data[[w]]
+  rws <- rw_names(rw_prefix, G)
+
+  est_m <- vapply(pv_vars, function(p) vdecomp_raw(data[[p]], wv, g), numeric(4))  # 4 × M
+  est   <- rowMeans(est_m)
+
+  # 抽樣變異：對每個 PV 各跑一次 80 組重複權重後平均（OECD 手冊完整作法）
+  v_samp <- rowMeans(vapply(seq_len(M), function(m) {
+    rep_est <- vapply(rws, function(r) vdecomp_raw(data[[pv_vars[m]]], data[[r]], g), numeric(4))
+    apply(sweep(rep_est, 1, est_m[, m], "-")^2, 1, sum) / (G * (1 - fay)^2)
+  }, numeric(4)))
+
+  b_m   <- apply(sweep(est_m, 1, est, "-")^2, 1, sum) / (M - 1)
+  v_imp <- (1 + 1 / M) * b_m
+
+  data.table(component = c("total", "between", "within", "icc"),
+             estimate = est, se = sqrt(v_samp + v_imp),
+             var_sampling = v_samp, var_imputation = v_imp)
+}
+
+# ---- 學校社經組成能解釋多少校間差異 ---------------------------------------
+# 以學校為單位，把校平均分數對校平均 ESCS 迴歸，取加權 R²。
+# 學校依其學生權重總和加權，使結果代表母體而非樣本學校。
+# 數值可讀成：「學校之間的成績落差，有多少比例對應到學生組成的社經差異」。
+r2_between_raw <- function(x, w, g, escs) {
+  ok <- is.finite(x) & is.finite(w) & !is.na(g) & is.finite(escs)
+  if (sum(ok) < 100L) return(NA_real_)
+  x <- x[ok]; w <- w[ok]; g <- g[ok]; escs <- escs[ok]
+  Wg <- as.vector(rowsum(w, g, reorder = FALSE))
+  my <- as.vector(rowsum(x * w, g, reorder = FALSE)) / Wg
+  mx <- as.vector(rowsum(escs * w, g, reorder = FALSE)) / Wg
+  if (length(my) < 10L) return(NA_real_)
+  sw <- sum(Wg)
+  ybar <- sum(Wg * my) / sw; xbar <- sum(Wg * mx) / sw
+  sxx <- sum(Wg * (mx - xbar)^2); syy <- sum(Wg * (my - ybar)^2)
+  if (sxx <= 0 || syy <= 0) return(NA_real_)
+  sxy <- sum(Wg * (mx - xbar) * (my - ybar))
+  (sxy^2 / sxx) / syy
+}
+
+pisa_r2_between <- function(data, pv_vars, sch = "CNTSCHID", escs = "ESCS",
+                            w = "W_FSTUWT", rw_prefix = "W_FSTURWT",
+                            G = 80, fay = 0.5) {
+  data <- as.data.table(data)
+  M <- length(pv_vars); g <- data[[sch]]; ev <- data[[escs]]; wv <- data[[w]]
+  rws <- rw_names(rw_prefix, G)
+  est_m <- vapply(pv_vars, function(p) r2_between_raw(data[[p]], wv, g, ev), numeric(1))
+  if (all(is.na(est_m))) return(list(estimate = NA_real_, se = NA_real_))
+  est <- mean(est_m, na.rm = TRUE)
+  v_samp <- mean(vapply(seq_len(M), function(m) {
+    rep_est <- vapply(rws, function(r) r2_between_raw(data[[pv_vars[m]]], data[[r]], g, ev), numeric(1))
+    brr_var(rep_est, est_m[m], G, fay)
+  }, numeric(1)), na.rm = TRUE)
+  b_m <- sum((est_m - est)^2, na.rm = TRUE) / (M - 1)
+  list(estimate = est, se = sqrt(v_samp + (1 + 1/M) * b_m))
+}

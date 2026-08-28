@@ -157,7 +157,7 @@ DL_JS_PAGES = """
 def build(target):
     html = (ROOT / "template.html").read_text()
 
-    for m in re.findall(r"<!--FIGSET:([a-z_]+)-->", html):
+    for m in re.findall(r"<!--FIGSET:([a-z0-9_]+)-->", html):
         block, names = figset_block(m)
         html = html.replace(f"<!--FIGSET:{m}-->", block)
         print(f"  FIGSET {m:10s} → {len(names)} 張")
@@ -192,6 +192,8 @@ def build(target):
                   lambda _: (ROOT / "pisa_data.json").read_text(), html, flags=re.S)
     html = re.sub(r"/\*__ZH_DATA__\*/.*?/\*__END__\*/",
                   lambda _: (ROOT / "country_zh.json").read_text(), html, flags=re.S)
+    html = re.sub(r"/\*__SCHOOL_DATA__\*/.*?/\*__END__\*/",
+                  lambda _: (ROOT / "school_data.json").read_text(), html, flags=re.S)
 
     left = re.findall(r"<!--(?:FIG|FIGSET|DLBLOCK):[^>]+-->", html)
     left += re.findall(r"/\*__[A-Z_]+__\*/", html)
