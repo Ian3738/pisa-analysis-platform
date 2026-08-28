@@ -136,6 +136,22 @@ build_report <- function() {
   GEN   <- as.data.table(J$gender); ESCJ  <- as.data.table(J$escs)
   TREND <- as.data.table(J$trend);  LE    <- as.data.table(J$linkErrors)
   CNM   <- as.data.table(J$countryNames)
+  SCH   <- fromJSON(file.path(PISA_ROOT, "web", "school_data.json"))
+  OPT   <- fromJSON(file.path(PISA_ROOT, "web", "optional_data.json"))
+  TIM   <- fromJSON(file.path(PISA_ROOT, "web", "timss_data.json"))
+  ICC   <- as.data.table(SCH$icc); R2B <- as.data.table(SCH$r2b); MUN <- as.data.table(SCH$mund)
+  CRTd  <- as.data.table(OPT$crt); SUBd <- as.data.table(OPT$sub); FLTd <- as.data.table(OPT$flt)
+  SUBN  <- as.data.table(OPT$subscales)
+  IEA   <- fromJSON(file.path(PISA_ROOT, "web", "iea_data.json"))
+  T4M   <- as.data.table(IEA$timss4_means); T4B <- as.data.table(IEA$timss4_bench)
+  PRM   <- as.data.table(IEA$pirls_means);  PRS <- as.data.table(IEA$pirls_sub)
+  PSN   <- as.data.table(IEA$pirls_subnames); POS <- as.data.table(IEA$position)
+  IEAN  <- setNames(as.data.table(IEA$names)$zh, as.data.table(IEA$names)$CNT)
+  TMM   <- as.data.table(TIM$means); TBEN <- as.data.table(TIM$bench)
+  TNM   <- setNames(as.data.table(TIM$names)$zh, as.data.table(TIM$names)$CNT)
+  gi <- function(cnt, cy, dm, col) { z <- ICC[CNT==cnt & cycle==cy & domain==dm]; if (nrow(z)) z[[col]] else NA }
+  gr <- function(cnt, cy, dm, col) { z <- R2B[CNT==cnt & cycle==cy & domain==dm]; if (nrow(z)) z[[col]] else NA }
+  gm <- function(cnt, dm, col)     { z <- MUN[CNT==cnt & domain==dm]; if (nrow(z)) z[[col]] else NA }
 
   nmm <- merge(unique(MEANS[, .(CNT, CNTRYID)]), CNM, by = "CNTRYID", all.x = TRUE)
   nmm[, zh := sapply(name, function(x) { v <- ZH[[x]]; if (is.null(v)) x else v })]
@@ -382,36 +398,291 @@ build_report <- function() {
 
   doc <- body_add_break(doc)
 
-  # ---------- 六、結論與限制 ----------
-  doc <- add_h1(doc, "陸、結論與研究限制")
+  # ---------- 陸、學校層級 ----------
+  doc <- add_h1(doc, "陸、學校層級分析結果")
+  doc <- add_body(doc,
+    "學生嵌套於學校，成績的總變異可依全變異數分解律精確拆成兩塊：同一所學校之內的差異（校內變異），與學校平均數之間的差異（校間變異）。兩者相加恆等於總變異。校間變異占總變異的比例，即為組內相關係數（ICC），是大型評比最常引用的公平性指標之一——數值越高，代表學生成績越取決於其就讀的學校而非個人條件。")
+  doc <- add_body(doc, sprintf(
+    "臺灣數學的校間變異比例自 2015 年的 %.1f%%、2018 年的 %.1f%%，上升至 2022 年的 %.1f%%。作為對照，分流體制明顯的荷蘭為 61.9%%、匈牙利 60.8%%，綜合型學制的芬蘭僅 11.6%%、冰島 11.8%%。臺灣在 2018 年至 2022 年之間的上升幅度值得注意，顯示校際隔離加深。",
+    100*gi("TAP",2015,"MATH","icc"), 100*gi("TAP",2018,"MATH","icc"), 100*gi("TAP",2022,"MATH","icc")))
+
+  doc <- add_figure(doc, 25, "trend_icc", "校間變異比例的跨輪次變化",
+    sprintf("縱軸為校間變異占總變異的百分比，臺灣以粗線標示。臺灣數學自 2018 年的 %.1f%% 升至 2022 年的 %.1f%%。芬蘭三輪均維持在 12%% 上下，是綜合型學制的代表。分解為恆等式：校間加校內等於總變異；本研究的實作在未加權情形下已與單因子變異數分析的平方和逐項比對，差異量級為 10 的負 11 次方。",
+      100*gi("TAP",2018,"MATH","icc"), 100*gi("TAP",2022,"MATH","icc")))
+
+  fn <- 26
+  for (dm in c("MATH","READ","SCIE")) {
+    doc <- add_figure(doc, fn, paste0("icc_", tolower(dm)),
+      sprintf("PISA 2022 %s：校間變異占總變異的比例", DZ[dm]),
+      sprintf("橫線為 95%% 信賴區間。臺灣%s的校間變異比例為 %.1f%%，全體 80 個國家與經濟體的中位數為 %.1f%%。數值越高，代表學生成績越取決於其就讀的學校。",
+        DZ[dm], 100*gi("TAP",2022,dm,"icc"), 100*median(ICC[cycle==2022 & domain==dm]$icc, na.rm=TRUE)))
+    fn <- fn + 1
+  }
+
+  doc <- add_body(doc,
+    "校間差異本身並不必然代表不公平，關鍵在於這些差異對應到什麼。若學校之間的成績落差幾乎就是學生社經組成落差的投影，則校際差異即為社會分層在教育體系中的再現。本研究以校平均分數對校平均 ESCS 的加權迴歸（學校依其學生權重總和加權）估計此一比例。")
+  doc <- add_body(doc, sprintf(
+    "臺灣數學的此一比例自 2015 年的 %.1f%%、2018 年的 %.1f%%，升至 2022 年的 %.1f%%。亦即校際成績落差中，有超過七成對應到學生組成的社經落差，且比例仍在上升。",
+    100*gr("TAP",2015,"MATH","r2"), 100*gr("TAP",2018,"MATH","r2"), 100*gr("TAP",2022,"MATH","r2")))
+
+  for (dm in c("MATH","READ","SCIE")) {
+    doc <- add_figure(doc, fn, paste0("r2b_", tolower(dm)),
+      sprintf("PISA 2022 %s：學校社經組成解釋的校間差異比例", DZ[dm]),
+      sprintf("校平均分數對校平均 ESCS 迴歸的加權 R²，學校依學生權重總和加權，使結果代表母體而非樣本學校。臺灣%s為 %.1f%%，全體中位數 %.1f%%。",
+        DZ[dm], 100*gr("TAP",2022,dm,"r2"), 100*median(R2B[cycle==2022 & domain==dm]$r2, na.rm=TRUE)))
+    fn <- fn + 1
+  }
+
+  doc <- add_body(doc,
+    "為釐清機制，本研究採 Mundlak 分解，將學生 ESCS 拆為兩個成分：其一為該生與同校同學的社經差距（校內成分），其二為該校的平均社經水準（校間成分）。兩者係數之差即脈絡效應，可解讀為：同一名學生若轉入社經背景較佳的學校，預期能多得幾分。")
+  doc <- add_body(doc, sprintf(
+    "臺灣 2022 年數學的校內個人效應為每一個標準差 %.1f 分，學校社經組成效應則高達 %.1f 分，脈絡效應 %.1f 分（SE = %.2f）。換言之，在臺灣「就讀哪一所學校」對成績的影響，約為「個人家庭背景在校內」影響的六倍。學校組成效應在全體國家中排名第三，僅次於荷蘭（157.9 分）與日本（134.3 分）。",
+    gm("TAP","MATH","b_within"), gm("TAP","MATH","b_school"),
+    gm("TAP","MATH","contextual"), gm("TAP","MATH","se_ctx")))
+
+  for (dm in c("MATH","READ","SCIE")) {
+    doc <- add_figure(doc, fn, paste0("mundlak_", tolower(dm)),
+      sprintf("PISA 2022 %s：個人社經效應與學校社經組成效應", DZ[dm]),
+      sprintf("橫軸為校內個人 ESCS 效應，縱軸為學校平均 ESCS 效應，虛線為兩者相等。落在虛線上方越遠，代表「就讀哪所學校」比「個人家庭背景」更決定成績。臺灣%s的兩個係數分別為 %.1f 與 %.1f 分。",
+        DZ[dm], gm("TAP",dm,"b_within"), gm("TAP",dm,"b_school")))
+    fn <- fn + 1
+  }
+
+  t6 <- ICC[cycle==2022 & domain=="MATH"][order(-icc)]
+  t6 <- merge(t6, R2B[cycle==2022 & domain=="MATH", .(CNT, r2)], by="CNT", all.x=TRUE)
+  t6 <- merge(t6, MUN[domain=="MATH", .(CNT, b_within, b_school, contextual)], by="CNT", all.x=TRUE)
+  t6 <- t6[order(-icc)]
+  t6out <- data.table(
+    名次 = seq_len(nrow(t6)), `國家／經濟體` = NMV[t6$CNT],
+    `校間變異 %` = sprintf("%.1f", 100*t6$icc), SE = sprintf("%.1f", 100*t6$se),
+    `社經解釋 %` = ifelse(is.na(t6$r2), "—", sprintf("%.1f", 100*t6$r2)),
+    `校內效應` = ifelse(is.na(t6$b_within), "—", sprintf("%.1f", t6$b_within)),
+    `學校組成效應` = ifelse(is.na(t6$b_school), "—", sprintf("%.1f", t6$b_school)),
+    `脈絡效應` = ifelse(is.na(t6$contextual), "—", sprintf("%.1f", t6$contextual)),
+    學校數 = t6$n_sch)
+  doc <- add_table(doc, 6, apa_table(t6out), "PISA 2022 數學各國學校層級指標",
+    "依校間變異比例排序。校內效應與學校組成效應為 Mundlak 分解的兩個迴歸係數，單位為每一個 ESCS 標準差對應的分數；脈絡效應為兩者之差。閱讀與科學的對應數值請見隨附之互動式平台。")
+
+  doc <- add_h2(doc, "方法交叉驗證：兩種估計標的")
+  doc <- add_body(doc,
+    "同一份臺灣 2022 年數學資料，本研究的設計基礎分解得校間變異比例 0.405，Mplus 的兩層隨機效果模型得 0.422（預設權重縮放）或 0.455（不縮放）。三者並非彼此矛盾，而是在估計不同的量。")
+  doc <- add_body(doc,
+    "設計基礎分解回答的是描述性問題：在全體 15 歲學生的成績變異中，有多少比例落在學校之間。它使用完整抽樣權重，且校間與校內恆等相加為總變異。模型基礎的變異成分則是階層模型中的潛在參數，其總和不必等於觀測變異，且會隨權重縮放方式改變——三者的總變異數本身即不相同（12,413、13,118、13,580），此即差異不在計算而在估計標的的直接證據。")
+  doc <- add_body(doc,
+    "迴歸係數的一致性則高得多：Mundlak 分解在本研究得校內效應 20.8、學校組成效應 131.6；Mplus 兩層模型得 19.9 與 125.0，差異來自 Mplus 僅使用單一個推估值且校層採隨機效果設定。Mplus 空模型的校間殘差變異自 5,537 降至 1,485，即學校社經組成解釋 73.2% 的校間變異；本研究的加權 R² 對同一問題給出 71.2%。兩條獨立路徑收斂至同一結論。")
+
+  doc <- body_add_break(doc)
+
+  # ---------- 柒、選考領域 ----------
+  doc <- add_h1(doc, "柒、選考領域與數學分測驗結果")
+  doc <- add_body(doc,
+    "PISA 2022 除核心三領域外，另有創造思考與財金素養兩個選考領域，以及數學的八個分測驗（內容向度四項、歷程向度四項）。這些資料與核心領域同時發布，惟使用率遠低於核心領域。")
+
+  twc <- CRTd[CNT=="TAP"]
+  doc <- add_body(doc, sprintf(
+    "臺灣參加創造思考評量，得分 %.1f（SE = %.2f），在 %d 個參與經濟體中排名第 %d。同一年臺灣數學排名第 3。名次落差最大的三個體制為澳門（差 19 名）、香港（18 名）與臺灣（13 名）；韓國僅差 4 名、新加坡兩項皆為第 1，可見此一落差並非東亞的共同現象，而是特定體制的特徵。",
+    twc$crt, twc$se, nrow(CRTd), twc$rank))
+
+  doc <- add_figure(doc, fn, "crt_vs_math", "數學表現與創造思考表現的對照",
+    "橫軸為 PISA 2022 數學平均分數，縱軸為創造思考分數（0 至 60 分量尺），虛線為線性趨勢。落在趨勢線下方，代表創造思考低於同等數學水準所預期的表現。此結果對強調解題訓練的課程體制具政策意涵。"); fn <- fn + 1
+
+  doc <- add_figure(doc, fn, "crt_rank", "PISA 2022 創造思考：各國平均與 95% 信賴區間",
+    sprintf("共 %d 個國家與經濟體參加。須特別說明資料處理上的一項陷阱：創造思考的認知檔本身不含抽樣權重，權重存放於主學生檔，必須以學生編號併回後方能進行加權估計；直接以認知檔計算會得到未加權的結果。", nrow(CRTd))); fn <- fn + 1
+
+  twsub <- merge(SUBd[CNT=="TAP"], SUBN, by.x="scale", by.y="code")
+  doc <- add_body(doc, sprintf(
+    "數學分測驗方面，臺灣八個向度的分數介於 %.1f 至 %.1f 分之間，全距僅 %.1f 分，輪廓異常平坦，並無明顯的相對強項或弱項。此一結果與部分國家在特定向度上有顯著優勢的形態不同。",
+    min(twsub$mean), max(twsub$mean), max(twsub$mean) - min(twsub$mean)))
+
+  doc <- add_figure(doc, fn, "subscale_profile", "PISA 2022 數學分測驗的相對強弱",
+    "各分測驗分數減去該國整體數學分數，正值代表相對強項。內容向度包含變化與關係、數量、空間與形狀、不確定性與資料；歷程向度包含形成、應用、詮釋、推理。四個採紙筆施測的國家不產出分測驗分數，屬測驗設計使然而非資料缺漏。"); fn <- fn + 1
+
+  doc <- add_figure(doc, fn, "flit_rank", "PISA 2022 財金素養：各國平均與 95% 信賴區間",
+    sprintf("僅 %d 個國家與經濟體參加此選考領域，臺灣未參加。資料處理上須注意：該領域的壓縮檔內含三個資料檔，惟僅問卷檔含推估值與權重，試題檔與作答時間檔皆無。", nrow(FLTd))); fn <- fn + 1
+
+  t7 <- CRTd[order(-crt)]
+  mrk <- MEANS[cycle==2022 & domain=="MATH" & !is.na(mean)][order(-mean)]
+  mrk[, mrank := .I]
+  t7 <- merge(t7, mrk[, .(CNT, math = mean, mrank)], by="CNT", all.x=TRUE)[order(-crt)]
+  t7out <- data.table(
+    `國家／經濟體` = NMV[t7$CNT],
+    創造思考 = sprintf("%.1f", t7$crt), 創造名次 = t7$rank,
+    數學 = ifelse(is.na(t7$math), "—", sprintf("%.1f", t7$math)),
+    數學名次 = ifelse(is.na(t7$mrank), NA, t7$mrank),
+    名次落差 = ifelse(is.na(t7$mrank), "—", sprintf("%+d", t7$rank - t7$mrank)))
+  doc <- add_table(doc, 7, apa_table(t7out), "PISA 2022 創造思考與數學表現對照",
+    "依創造思考分數排序。名次落差為創造思考名次減數學名次，正值代表創造思考的相對表現落後於數學。創造思考採 0 至 60 分量尺，與數學的 PISA 量尺不同，不可直接比較分數，僅能比較相對位置。")
+
+  doc <- body_add_break(doc)
+
+  # ---------- 捌、TIMSS ----------
+  doc <- add_h1(doc, "捌、IEA 系列評比結果與跨評比對照")
+  doc <- add_body(doc, sprintf(
+    "為避免單一評比的結論受其測驗取向影響，本研究另納入國際教育成就評鑑協會（IEA）主辦的國際數學與科學教育成就趨勢調查（TIMSS）2023 年八年級資料，共 %d 個國家與經濟體、%s 名學生。TIMSS 測量的是各國課程實際教授的內容，PISA 測量的是將知識應用於真實情境的能力，兩者評量的並非同一構念。",
+    TIM$meta$n_country, format(TIM$meta$n_student, big.mark=",")))
+
+  doc <- add_h2(doc, "一、TIMSS 與 PISA 的設計差異")
+  doc <- add_body(doc,
+    "兩套評比的抽樣與計分設計不同，直接沿用 PISA 的分析程式雖不會產生錯誤訊息，卻會得到錯誤的標準誤。主要差異有三：其一，TIMSS 每個量尺提供 5 個合理推估值，PISA 為 10 個；其二，TIMSS 的變異數以 JK2 折刀法估計，依 JKZONE 與 JKREP 兩欄即時建構重複權重，PISA 則使用 Fay 平衡重複半樣本法搭配 80 組現成的重複權重；其三，權重欄位名稱不同。")
+  doc <- add_body(doc,
+    "JK2 的作法為：將學校在每個折刀區內兩兩配對，對第 h 區產生一組重複權重——該區中 JKREP 為 1 者權重加倍、為 0 者歸零，其餘各區維持原權重；變異數為各區估計值與全樣本估計值離差平方和。此處不含 Fay 法的縮放係數，因加倍與歸零本身已內含縮放。")
+  doc <- add_body(doc,
+    "本研究為此另行撰寫估計核心，並以獨立實作交叉驗證：臺灣八年級數學平均 602.430，標準誤 3.074（抽樣成分 2.758、推估成分 1.359，93 組重複權重），兩者逐位數一致。")
+
+  t8 <- data.table(
+    資料庫 = c("PISA", "TIMSS", "TASA", "TEPS／TEPS-B"),
+    設計 = c("重複橫斷", "重複橫斷", "重複橫斷", "追蹤（panel）"),
+    對象 = c("15 歲學生", "四年級與八年級", "國中小各年級", "同一批學生多波"),
+    推估值 = c("10 個", "5 個", "依年份", "多波測量"),
+    變異數估計 = c("Fay BRR（80 組）", "JK2 折刀", "依技術報告", "追蹤樣本權重"),
+    取得方式 = c("官方直接下載", "官方直接下載", "需申請", "需申請"))
+  doc <- add_table(doc, 8, apa_table(t8), "四個大型教育資料庫的設計比較",
+    "TEPS 為其中唯一的追蹤設計，自 2001 年起追蹤同一批學生，因此也是唯一能進行個人成長軌跡、交叉延宕模型與個體固定效果分析的資料庫。PISA 與 TIMSS 皆為重複橫斷設計，每輪抽取不同學生，僅能進行群體層次的趨勢比較。")
+
+  doc <- add_h2(doc, "二、TIMSS 2023 八年級結果")
+  twt <- TMM[CNT=="TWN"]
+  doc <- add_body(doc, sprintf(
+    "臺灣八年級數學平均 %.1f 分（SE = %.2f），在 %d 個參與經濟體中排名第 %d，僅次於新加坡的 605.3 分；科學平均 %.1f 分（SE = %.2f），同樣排名第 %d。",
+    twt[domain=="MATH"]$mean, twt[domain=="MATH"]$se, TIM$meta$n_country, twt[domain=="MATH"]$rank,
+    twt[domain=="SCIE"]$mean, twt[domain=="SCIE"]$se, twt[domain=="SCIE"]$rank))
+
+  for (dm in c("MATH","SCIE")) {
+    zz <- c(MATH="數學", SCIE="科學")[dm]
+    doc <- add_figure(doc, fn, paste0("timss_rank_", tolower(dm)),
+      sprintf("TIMSS 2023 八年級%s：各國平均與 95%% 信賴區間", zz),
+      sprintf("以 5 個合理推估值搭配 JK2 折刀法估計，虛線為四個國際基準點（400、475、550、625 分）。臺灣%s平均 %.1f 分（SE = %.2f），排名第 %d。",
+        zz, twt[domain==dm]$mean, twt[domain==dm]$se, twt[domain==dm]$rank))
+    fn <- fn + 1
+  }
+
+  tb <- TBEN[CNT=="TWN"]
+  doc <- add_body(doc, sprintf(
+    "以國際基準點觀之，臺灣八年級學生達數學低標（400 分）者占 %.1f%%、中標（475 分）%.1f%%、高標（550 分）%.1f%%、高階（625 分）%.1f%%。達高階基準的比率在全體經濟體中排名第二，僅次於新加坡的 46.3%%。科學的對應比率分別為 %.1f%%、%.1f%%、%.1f%% 與 %.1f%%。",
+    tb[domain=="MATH" & bench=="Low"]$pct, tb[domain=="MATH" & bench=="Intermediate"]$pct,
+    tb[domain=="MATH" & bench=="High"]$pct, tb[domain=="MATH" & bench=="Advanced"]$pct,
+    tb[domain=="SCIE" & bench=="Low"]$pct, tb[domain=="SCIE" & bench=="Intermediate"]$pct,
+    tb[domain=="SCIE" & bench=="High"]$pct, tb[domain=="SCIE" & bench=="Advanced"]$pct))
+
+  for (dm in c("MATH","SCIE")) {
+    zz <- c(MATH="數學", SCIE="科學")[dm]
+    doc <- add_figure(doc, fn, paste0("timss_bench_", tolower(dm)),
+      sprintf("TIMSS 2023 八年級%s：達各國際基準的學生比率", zz),
+      sprintf("四個基準為巢狀關係，達高階者必然亦達其餘三標，故長條相互覆蓋而非堆疊。依達高階基準的比率排序。臺灣%s達高階基準者占 %.1f%%。",
+        zz, tb[domain==dm & bench=="Advanced"]$pct))
+    fn <- fn + 1
+  }
+
+  XC <- as.data.table(TIM$cross)
+  doc <- add_figure(doc, fn, "pisa_vs_timss", "PISA 2022 與 TIMSS 2023 數學表現的對照",
+    sprintf("橫軸為 PISA 2022 數學（15 歲，應用素養），縱軸為 TIMSS 2023 八年級數學（課程本位），虛線為線性趨勢。共 %d 個同時參加兩項評比的經濟體，兩者相關係數為 %.3f。兩套量尺不同，不可直接相減，此圖呈現的是相對位置。臺灣在兩項評比中均居前列，與創造思考的第 %d 名形成對比。",
+      nrow(XC), cor(XC$pisa, XC$timss), twc$rank)); fn <- fn + 1
+
+  doc <- add_h2(doc, "三、TIMSS 2023 四年級與 PIRLS 2021")
+  t4tw <- T4M[CNT=="TWN"]; prtw <- PRM[CNT=="TWN"]
+  doc <- add_body(doc, sprintf(
+    "為避免結論受單一年級或單一學科取向影響，本研究另納入 TIMSS 2023 四年級（%d 個經濟體、%s 名學生）與 PIRLS 2021 四年級閱讀（%d 個經濟體、%s 名學生）。三套 IEA 評比的抽樣與計分設計相同，均為 5 個合理推估值搭配 JK2 折刀法，故可共用同一估計核心。",
+    IEA$meta$timss_g4$n_country, format(IEA$meta$timss_g4$n_student, big.mark=","),
+    IEA$meta$pirls$n_country, format(IEA$meta$pirls$n_student, big.mark=",")))
+  doc <- add_body(doc, sprintf(
+    "臺灣四年級數學平均 %.1f 分排名第 %d、科學 %.1f 分排名第 %d，表現與八年級一致。惟四年級閱讀（PIRLS）平均 %.1f 分（SE = %.2f）僅排名第 %d，與數理科目的排名形成明顯落差。須特別說明，TIMSS 四年級與八年級為獨立抽取的樣本，並非同一批學生的追蹤，兩者分數之差不可解讀為成長。",
+    t4tw[domain=="MATH"]$mean, t4tw[domain=="MATH"]$rank,
+    t4tw[domain=="SCIE"]$mean, t4tw[domain=="SCIE"]$rank,
+    prtw$mean, prtw$se, prtw$rank))
+
+  doc <- add_figure(doc, fn, "taiwan_position", "臺灣在九項國際評比中的相對位置",
+    "各評比參與國數不同，故以百分位表示相對位置，100% 代表第 1 名。臺灣在數學與科學各項均在 96 百分位以上，惟四年級閱讀落在 78.5、創造思考 76.2。此一落差並非量測誤差，而是穩定出現於不同評比、不同年齡與不同主辦單位的一致形態，具政策意涵。"); fn <- fn + 1
+
+  for (dm in c("MATH","SCIE")) {
+    zz <- c(MATH="數學", SCIE="科學")[dm]
+    doc <- add_figure(doc, fn, paste0("timss4_rank_", tolower(dm)),
+      sprintf("TIMSS 2023 四年級%s：各國平均與 95%% 信賴區間", zz),
+      sprintf("臺灣四年級%s平均 %.1f 分（SE = %.2f），排名第 %d。虛線為四個國際基準點。四年級與八年級為獨立樣本，不可解讀為同一批學生的成長。",
+        zz, t4tw[domain==dm]$mean, t4tw[domain==dm]$se, t4tw[domain==dm]$rank))
+    fn <- fn + 1
+  }
+
+  doc <- add_figure(doc, fn, "pirls_rank", "PIRLS 2021 四年級閱讀：各國平均與 95% 信賴區間",
+    sprintf("臺灣平均 %.1f 分（SE = %.2f），在 %d 個參與者中排名第 %d。部分參與者為次國家層級的標竿實體，如莫斯科市、加拿大各省與比利時語區。本研究採數位施測（digitalPIRLS）的主樣本；紙筆檔為橋接研究，用於連結歷年趨勢，未納入本次估計。",
+      prtw$mean, prtw$se, nrow(PRM), prtw$rank)); fn <- fn + 1
+
+  prsub <- merge(PRS[CNT=="TWN"], PSN, by.x="scale", by.y="code")[order(-rel)]
+  doc <- add_figure(doc, fn, "pirls_subscale", "PIRLS 2021 閱讀分測驗的相對強弱",
+    sprintf("各分測驗分數減去該國整體閱讀分數，正值代表相對強項。臺灣四年級學生在「%s」相對強（%+.1f 分），在「%s」相對弱（%+.1f 分）。此一形態與 PISA 創造思考的相對落後，可能指向同一個課程面向。",
+      prsub$zh[1], prsub$rel[1], prsub$zh[nrow(prsub)], prsub$rel[nrow(prsub)])); fn <- fn + 1
+
+  t10out <- data.table(
+    評比 = POS$label, 名次 = POS$rank, 參與者數 = POS$total,
+    `百分位 %` = sprintf("%.1f", POS$pct), 類別 = POS$kind)
+  doc <- add_table(doc, 9, apa_table(t10out), "臺灣在九項國際評比中的相對位置",
+    "百分位以 100 乘以（1 減去（名次減 1）除以參與者數）計算，100% 代表第 1 名。各評比的量尺、施測年齡與主辦單位不同，分數不可直接比較，此表僅比較相對位置。")
+
+  t9 <- TMM[domain=="MATH"][order(rank)]
+  t9 <- merge(t9, TBEN[domain=="MATH" & bench=="Advanced", .(CNT, adv = pct)], by="CNT")
+  t9 <- merge(t9, TMM[domain=="SCIE", .(CNT, scie = mean, srank = rank)], by="CNT")[order(rank)]
+  t9out <- data.table(
+    名次 = t9$rank, `國家／經濟體` = TNM[t9$CNT],
+    數學 = sprintf("%.1f", t9$mean), SE = sprintf("%.2f", t9$se),
+    `高階 %` = sprintf("%.1f", t9$adv),
+    科學 = sprintf("%.1f", t9$scie), 科學名次 = t9$srank,
+    樣本數 = format(t9$n, big.mark=","))
+  doc <- add_table(doc, 10, apa_table(t9out), "TIMSS 2023 八年級各國估計值",
+    "依數學平均分數排序。高階欄為達 625 分國際基準的加權學生比率。標準誤以 5 個合理推估值搭配 JK2 折刀法估計，折刀區數依各國抽樣設計而異，介於 50 至 125 之間。")
+
+  doc <- body_add_break(doc)
+
+  # ---------- 玖、結論與限制 ----------
+  doc <- add_h1(doc, "玖、結論與研究限制")
   doc <- add_h2(doc, "一、主要發現")
   doc <- add_body(doc, sprintf(
-    "第一，臺灣在 PISA 2022 三個核心領域的表現均居國際前列（數學第 %d 位、科學第 %d 位、閱讀第 %d 位），且相較 2018 年均達統計顯著的進步。惟若以 2015 年為基期，數學與科學的變化則未達顯著，顯示 2018 年係三輪中的低點，基期選擇對趨勢結論具決定性影響。",
-    TWR[["MATH"]], TWR[["SCIE"]], TWR[["READ"]]))
-  doc <- add_body(doc,
-    "第二，臺灣的成績提升伴隨分配擴大而非整體平移。數學未達基礎水準者的比率自 2018 年的 13.98% 上升至 2022 年的 14.61%，同期高表現者自 23.19% 上升至 31.73%，兩端同時擴張。")
+    "第一，臺灣學生在兩套國際評比中均居前列，惟兩者測量的構念不同。PISA 2022 數學排名第 %d、科學第 %d、閱讀第 %d；TIMSS 2023 八年級數學與科學均排名第 2。前者測應用素養，後者測課程本位的學習成果，兩項評比在 %d 個共同參與的經濟體間相關達 %.3f，臺灣在兩者皆表現優異，顯示課程實施與素養轉化均有成效。",
+    TWR[["MATH"]], TWR[["SCIE"]], TWR[["READ"]], nrow(XC), cor(XC$pisa, XC$timss)))
   doc <- add_body(doc, sprintf(
-    "第三，社經梯度明顯變陡。臺灣數學的社經梯度自 2018 年的 %.1f 分升至 2022 年的 %.1f 分，高於全體中位數 %.1f 分。成績提升與教育機會均等並未同步。",
+    "第二，創造思考是明顯的例外。臺灣創造思考在 %d 個經濟體中排名第 %d，與數學的第 %d 名落差 %d 個名次。名次落差最大的三個體制為澳門、香港與臺灣，而韓國僅差 4 名、新加坡兩項皆為第 1，可見此非東亞的共同現象。此結果指向特定課程與評量取向的影響，值得政策層面關注。",
+    nrow(CRTd), twc$rank, TWR[["MATH"]], twc$rank - TWR[["MATH"]]))
+  doc <- add_body(doc, sprintf(
+    "第三，成績提升伴隨分配擴大而非整體平移。臺灣數學未達基礎水準者的比率自 2018 年的 %.2f%% 上升至 2022 年的 %.2f%%，同期達高表現水準者自 %.2f%% 上升至 %.2f%%，兩端同時擴張。",
+    gv(TWP,"MATH","below_L2_2018"), gv(TWP,"MATH","below_L2_2022"),
+    gv(TWP,"MATH","above_L5_2018"), gv(TWP,"MATH","above_L5_2022")))
+  doc <- add_body(doc, sprintf(
+    "第四，教育機會的分化同時出現在個人與學校兩個層次。個人層次上，社經梯度自 2018 年的 %.1f 分升至 2022 年的 %.1f 分（每一個 ESCS 標準差），高於全體中位數 %.1f 分。學校層次上，校間變異比例自 %.1f%% 升至 %.1f%%，且校間差異中有 %.1f%% 對應到學生組成的社經落差，較 2015 年的 %.1f%% 為高。",
     ESCJ[CNT=="TAP" & domain=="MATH" & cycle==2018]$slope,
     ESCJ[CNT=="TAP" & domain=="MATH" & cycle==2022]$slope,
-    median(ESCJ[cycle==2022 & domain=="MATH"]$slope, na.rm = TRUE)))
+    median(ESCJ[cycle==2022 & domain=="MATH"]$slope, na.rm = TRUE),
+    100*gi("TAP",2018,"MATH","icc"), 100*gi("TAP",2022,"MATH","icc"),
+    100*gr("TAP",2022,"MATH","r2"), 100*gr("TAP",2015,"MATH","r2")))
+  doc <- add_body(doc, sprintf(
+    "第五，Mundlak 分解顯示分化的主要載體是學校而非家庭。臺灣的校內個人社經效應為每一個標準差 %.1f 分，學校社經組成效應則達 %.1f 分，脈絡效應 %.1f 分（SE = %.2f）。就讀哪一所學校對成績的影響約為個人家庭背景在校內影響的六倍，學校組成效應在全體國家中排名第三。此結果指出，若政策目標為縮小成就落差，介入點應在學校之間的資源與生源分布，而非僅止於個別學生的補救。",
+    gm("TAP","MATH","b_within"), gm("TAP","MATH","b_school"),
+    gm("TAP","MATH","contextual"), gm("TAP","MATH","se_ctx")))
+
+  doc <- add_body(doc, sprintf(
+    "第六，跨四套評比的相對位置呈現一致形態。臺灣在 TIMSS 四年級數學、TIMSS 八年級數學與科學、PISA 數學與科學各項均在 96 百分位以上，惟 PIRLS 四年級閱讀落在 %.1f 百分位、PISA 創造思考 %.1f 百分位。此一落差跨越不同年齡、不同主辦單位與不同測驗取向而穩定存在，難以歸因於單一評比的特性，指向課程與評量重心的結構性議題。",
+    POS[label=="PIRLS 四年級閱讀"]$pct, POS[label=="PISA 創造思考"]$pct))
 
   doc <- add_h2(doc, "二、方法學上的提醒")
   doc <- add_body(doc, sprintf(
-    "本研究實證顯示，在全部 %d 組跨輪次比較中，有 %d 組於忽略連結誤差時會得到錯誤的顯著性結論，標準誤最多被低估至 %.2f 倍。國內外以 PISA 資料進行趨勢分析的研究，宜明確交代是否納入連結誤差。",
+    "第一，跨輪次比較必須納入連結誤差。本研究實證顯示，在全部 %d 組跨輪次比較中，有 %d 組於忽略連結誤差時會得到錯誤的顯著性結論，標準誤最多被低估至 %.2f 倍。",
     FLT$n, FLT$flip, FLT$infl))
   doc <- add_body(doc,
-    "此外，加權與否對結果的影響遠大於一般預期。以 PISA 2022 數學為例，臺灣未加權平均為 534.02 分，加權後為 547.13 分，相差 13.11 分，為全體 80 個國家與經濟體中差異最大者。")
+    "第二，加權與否對結果的影響遠大於一般預期。以 PISA 2022 數學為例，80 個國家與經濟體的加權與未加權平均差異中位數為 2.07 分，最大達 20.60 分。臺灣為正向差異最大者：未加權 534.02 分，加權後 547.13 分，相差 13.11 分。")
+  doc <- add_body(doc,
+    "第三，不同資料庫不可共用同一套分析程式。TIMSS 與 PIRLS 使用 5 個合理推估值與 JK2 折刀法，PISA 使用 10 個推估值與 Fay 平衡重複半樣本法。將 PISA 的程式直接套用於 IEA 系列評比不會產生錯誤訊息，但標準誤是錯的。本研究為此另行撰寫估計核心，並以獨立實作逐位數驗證；TIMSS 與 PIRLS 因設計相同，可共用同一核心。")
+  doc <- add_body(doc,
+    "第四，設計基礎分解與模型基礎的變異成分是不同的估計標的，不宜互相取代或視為驗證失敗。本研究對同一份資料所得的 0.405 與 0.422、0.455，差異來自估計標的與權重縮放方式，三者的總變異數本身即不相同。研究報告宜明確交代所採用的定義。")
 
   doc <- add_h2(doc, "三、研究限制")
   doc <- add_body(doc,
-    "第一，PISA 屬重複橫斷設計而非追蹤設計。每一輪抽取的是不同的 15 歲學生，並無任何學生被重複測量。因此本研究的所有趨勢結果均為群體層次的比較，不得詮釋為個別學生的成長軌跡，亦不適用潛在成長模型、交叉延宕模型或個體層次的固定效果模型。若研究問題必須探討個人成長，須改用具追蹤設計的資料。")
+    "第一，PISA 與 TIMSS 均屬重複橫斷設計而非追蹤設計。每一輪抽取的是不同學生，並無任何學生被重複測量。因此本研究的所有趨勢結果均為群體層次的比較，不得詮釋為個別學生的成長軌跡，亦不適用潛在成長模型、交叉延宕模型或個體層次的固定效果模型。若研究問題必須探討個人成長，須改用具追蹤設計的資料，如臺灣教育長期追蹤資料庫（TEPS、TEPS-B）。")
   doc <- add_body(doc,
     "第二，跨輪次可比性有其上限。各領域最早僅能回溯至其首次成為主測領域的輪次：閱讀為 2000 年、數學為 2003 年、科學為 2006 年。此外，PISA 自 2015 年起主要改採電腦施測，跨越該年的比較其不確定性本質上高於其後各輪之間的比較。")
   doc <- add_body(doc,
     "第三，ESCS 指標於 2022 年重新校準，各輪原始 ESCS 不可直接比較。本研究涉及社經地位的跨輪分析已改用 OECD 發布之 trend ESCS，惟該檔僅涵蓋 2012、2015 與 2018 三輪，故社經地位的可比區間較成績趨勢為窄。")
   doc <- add_body(doc,
     "第四，PISA 2022 的施測期間橫跨 COVID-19 疫情，部分國家延後施測或調整樣本。詮釋 2018 年至 2022 年的變化時，教育政策效果與疫情衝擊難以分離。")
+  doc <- add_body(doc,
+    "第五，PISA 2012 年以前的輪次未納入。OECD 於 2024 年改版官方網站，舊有檔案網址失效，新頁面啟用人機驗證機制，無法以程式自動取得。此部分需以人工方式下載，且提供的是 ASCII 定寬檔配合統計軟體讀取語法，而非現成的資料檔。")
+  doc <- add_body(doc,
+    "第六，臺灣本土大型資料庫尚未納入。TASA 與 TEPS 均需經申請程序方能取得，本研究已完成接入流程的建置，惟資料到位前無法進行實際分析。TEPS 為其中唯一的追蹤設計，若能納入，將可補足本研究在個人成長軌跡上的空缺。")
 
   doc <- body_add_break(doc)
   doc <- add_h1(doc, "參考文獻")
@@ -419,6 +690,10 @@ build_report <- function() {
     "OECD (2023). PISA 2022 results (Volume I): The state of learning and equity in education. OECD Publishing. https://doi.org/10.1787/53f23881-en",
     "OECD (2024). PISA 2022 technical report. OECD Publishing. https://doi.org/10.1787/01820d6d-en",
     "OECD (2009). PISA data analysis manual: SPSS (2nd ed.). OECD Publishing.",
+    "Mullis, I. V. S., von Davier, M., Foy, P., Fishbein, B., Reynolds, K. A., & Wry, E. (2023). TIMSS 2023 international results in mathematics and science. TIMSS & PIRLS International Study Center, Boston College.",
+    "von Davier, M., Kennedy, A., Reynolds, K., Fishbein, B., Khorramdel, L., Aldrich, C., Bookbinder, A., Bezirhan, U., & Yin, L. (2024). TIMSS 2023 technical report. TIMSS & PIRLS International Study Center, Boston College.",
+    "Mundlak, Y. (1978). On the pooling of time series and cross section data. Econometrica, 46(1), 69-85.",
+    "Mullis, I. V. S., von Davier, M., Foy, P., Fishbein, B., Reynolds, K. A., & Wry, E. (2023). PIRLS 2021 international results in reading. TIMSS & PIRLS International Study Center, Boston College.",
     "Rubin, D. B. (1987). Multiple imputation for nonresponse in surveys. John Wiley & Sons.",
     "Judkins, D. R. (1990). Fay's method for variance estimation. Journal of Official Statistics, 6(3), 223–239.",
     "Wolter, K. M. (2007). Introduction to variance estimation (2nd ed.). Springer.")
