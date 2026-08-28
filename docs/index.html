@@ -38556,13 +38556,14 @@ const DATASETS = [
 ];
 
 let curDS = 'all';
-function tabVisible(ds) { const f = DS_FILTER[curDS]; return !f || f.indexOf(ds) >= 0; }
+// DS_FILTER 存的是分頁 id，比對時要用 id 而非資料庫代碼
+function tabVisible(id) { const f = DS_FILTER[curDS]; return !f || f.indexOf(id) >= 0; }
 function applyDS(v, jump) {
   curDS = v;
   $$('.ds-chip').forEach(c => c.setAttribute('aria-pressed', String(c.dataset.ds === v)));
   let firstVisible = null;
-  TABS.forEach(([id, , ds]) => {
-    const t = $('#t-' + id), vis = tabVisible(ds);
+  TABS.forEach(([id]) => {
+    const t = $('#t-' + id), vis = tabVisible(id);
     t.classList.toggle('hidden', !vis);
     if (vis && !firstVisible) firstVisible = id;
   });
