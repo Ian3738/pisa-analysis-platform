@@ -126,13 +126,41 @@ pisa_trend_diff(531.1, 2.89, 547.1, 3.78, get_link_error(2018, 2022, "MATH"))
 
 ## 資料來源與授權
 
-分析資料為 OECD 發布的 PISA 公開使用檔（Public Use Files），著作權屬 OECD 所有，
-本專案不重新散布原始資料，僅提供取得與處理的程式。連結誤差數值取自
-PISA 2022 技術報告 Annex Table 14.A.19，精熟等級切點取自同報告 Annex Tables
-17.A.2、17.A.12、17.A.13、17.A.14。
+本專案**不重新散布任何原始資料**，僅提供取得與處理的程式。所有資料檔均已排除於
+版本控制之外，首次執行時由使用者自官方來源取得。
+
+### OECD（PISA、TALIS）
+
+著作權屬 OECD 所有。連結誤差數值取自 PISA 2022 技術報告 Annex Table 14.A.19，
+精熟等級切點取自同報告 Annex Tables 17.A.2、17.A.12、17.A.13、17.A.14。
 
 - OECD (2023). *PISA 2022 results (Volume I)*. https://doi.org/10.1787/53f23881-en
 - OECD (2024). *PISA 2022 technical report*. https://doi.org/10.1787/01820d6d-en
+
+### IEA（TIMSS、PIRLS）
+
+TIMSS、PIRLS、ICCS 與 ICILS 為 IEA 的註冊商標。IEA 的授權條款要求引用時
+註明來源、年份與標題，且僅限非商業之教育與研究用途。本專案依其建議格式標註：
+
+> SOURCE: TIMSS 2023 Assessment. Copyright © 2024 International Association for the
+> Evaluation of Educational Achievement (IEA). Publisher: TIMSS & PIRLS International
+> Study Center, Lynch School of Education, Boston College.
+
+> SOURCE: PIRLS 2021 Assessment. Copyright © 2023 International Association for the
+> Evaluation of Educational Achievement (IEA). Publisher: TIMSS & PIRLS International
+> Study Center, Lynch School of Education, Boston College.
+
+- Mullis, I. V. S., von Davier, M., Foy, P., Fishbein, B., Reynolds, K. A., & Wry, E. (2023).
+  *TIMSS 2023 international results in mathematics and science*. Boston College.
+- Mullis, I. V. S., von Davier, M., Foy, P., Fishbein, B., Reynolds, K. A., & Wry, E. (2023).
+  *PIRLS 2021 international results in reading*. Boston College.
+
+**IEA 授權條款中兩條需留意者**（見 IEA Disclaimer and License Agreement）：
+
+- 第 2.1 條：未經 IEA 書面許可，不得重製、散布或以任何形式傳輸其出版品與
+  限制使用項目。本專案僅發布自行計算的彙總統計量並註明來源，不散布原始資料。
+- 第 1.3 條：**將 IEA 資料用於評量或學習材料時，須事先通知 IEA。**
+  若本專案的產出將作為正式課程教材，使用者應自行向 IEA 完成此一告知。
 
 ## 已知限制
 
