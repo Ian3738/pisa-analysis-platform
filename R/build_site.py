@@ -196,6 +196,8 @@ def build(target):
                   lambda _: (ROOT / "school_data.json").read_text(), html, flags=re.S)
     html = re.sub(r"/\*__OPT_DATA__\*/.*?/\*__END__\*/",
                   lambda _: (ROOT / "optional_data.json").read_text(), html, flags=re.S)
+    html = re.sub(r"/\*__TIMSS_DATA__\*/.*?/\*__END__\*/",
+                  lambda _: (ROOT / "timss_data.json").read_text(), html, flags=re.S)
 
     left = re.findall(r"<!--(?:FIG|FIGSET|DLBLOCK):[^>]+-->", html)
     left += re.findall(r"/\*__[A-Z_]+__\*/", html)

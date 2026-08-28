@@ -528,6 +528,62 @@ footer .fl { display:flex; flex-wrap:wrap; gap:6px 24px; }
     </div>
   </section>
 
+  <!-- ============ TIMSS ============ -->
+  <section class="panel" id="p-timss" role="tabpanel" aria-labelledby="t-timss">
+    <div class="sec">
+      <div class="eyebrow">另一套國際大型評比</div>
+      <h2>TIMSS 2023 八年級</h2>
+      <p class="lead">TIMSS 由國際教育成就評鑑協會（IEA）主辦，測的是各國課程實際教過的內容；PISA 由 OECD 主辦，測的是把知識用在真實情境的能力。兩者評的不是同一件事。</p>
+      <div class="tiles" id="timssTiles" style="margin-bottom:26px"></div>
+      <div class="controls">
+        <div class="ctl-group"><span class="ctl-label">領域</span>
+          <div class="seg" id="tmDomain" role="group" aria-label="選擇領域"></div></div>
+      </div>
+    </div>
+
+    <div class="stack">
+      <figure>
+        <div class="figbox"><!--FIG:pisa_vs_timss--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 跨評比對照</div>
+        <figcaption>36 個同時參加兩項評比的經濟體，兩者相關 r = 0.948。量尺不同不可相減，此圖看的是相對位置。</figcaption>
+      </figure>
+
+      <figure>
+        <div class="figbox figset" id="tmRankFigs"><!--FIGSET:timss_rank--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 5 個推估值 × JK2 折刀法</div>
+        <figcaption>虛線為四個國際基準點（400／475／550／625）。TIMSS 的變異數估計法與 PISA 不同，照抄 PISA 的程式會得到錯誤的標準誤。</figcaption>
+      </figure>
+
+      <figure>
+        <div class="figbox figset" id="tmBenchFigs"><!--FIGSET:timss_bench--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 加權比率</div>
+        <figcaption>巢狀比率，達高階者必然也達其餘三標，故長條相互覆蓋而非堆疊。臺灣 44.4% 的學生達數學高階基準，僅次於新加坡的 46.3%。</figcaption>
+      </figure>
+    </div>
+
+    <div class="sec">
+      <h2>各國數值</h2>
+      <div class="tablewrap"><table id="timssTable"></table></div>
+    </div>
+
+    <div class="sec">
+      <div class="eyebrow">為什麼要另寫一套估計核心</div>
+      <h2>三個資料庫的設計差異</h2>
+      <div class="tablewrap"><table id="designTable"></table></div>
+      <p class="note">把 PISA 的程式直接套到 TIMSS 上不會報錯，但會得到錯誤的標準誤——推估值個數與變異數估計法都不同。本平台為 TIMSS 另寫 <code>lib_timss.R</code>，並以 r-stats 的 <code>survey_mean</code> 獨立驗證：臺灣八年級數學 602.430（SE 3.074，抽樣 2.758、推估 1.359，93 組重複權重），兩者逐位數一致。</p>
+    </div>
+
+    <div class="sec">
+      <div class="eyebrow">尚未到位</div>
+      <h2>臺灣本土資料庫</h2>
+      <div class="prose">
+        <p>TASA（國家教育研究院臺灣學生學習成就評量資料庫）與 TEPS／TEPS-B（中央研究院）都需要申請取得，無法自動下載。本平台已寫好接入骨架，資料到位後把檔案放進指定目錄即可沿用同一套估計程序。</p>
+        <p><strong>TASA</strong>　線上申請，需檢附研究計畫書與 IRB 核可文件。抽樣為分層叢集設計，提供學生權重與複本權重。</p>
+        <p><strong>TEPS／TEPS-B</strong>　向學術調查研究資料庫（SRDA）申請。這是四個資料庫中唯一的追蹤設計，自 2001 年起追蹤同一批學生——因此也是唯一能做個人成長軌跡、交叉延宕模型與個體固定效果的資料。PISA 與 TIMSS 皆為重複橫斷，每輪抽取不同學生，只能做群體層次的趨勢比較。</p>
+      </div>
+    </div>
+  </section>
+
   <!-- ============ 方法學 ============ -->
   <section class="panel" id="p-method" role="tabpanel" aria-labelledby="t-method">
     <div class="sec">
@@ -691,6 +747,7 @@ const DATA = /*__PISA_DATA__*/ null /*__END__*/;
 const ZH   = /*__ZH_DATA__*/ {} /*__END__*/;
 const SCHOOL = /*__SCHOOL_DATA__*/ null /*__END__*/;
 const OPT = /*__OPT_DATA__*/ null /*__END__*/;
+const TIMSS = /*__TIMSS_DATA__*/ null /*__END__*/;
 
 const $  = (s, r) => (r || document).querySelector(s);
 const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
@@ -760,7 +817,7 @@ function badge(sig) {
 /* 分頁 */
 const TABS = [['overview','總覽'], ['desc','描述統計'], ['trend','趨勢'], ['link','連結誤差'],
               ['country','各國比較'], ['equity','公平性'], ['school','學校層級'],
-              ['extra','選考領域'], ['method','方法學'], ['system','系統']];
+              ['extra','選考領域'], ['timss','TIMSS'], ['method','方法學'], ['system','系統']];
 (function () {
   const host = $('#tablist');
   TABS.forEach(([id, label], i) => {
@@ -1098,7 +1155,64 @@ function drawSch() {
   $('#extraTable').innerHTML = h + '</tbody>';
 })();
 
-initTr(); initLE(); drawLE(); initCty(); drawCty(); initEq(); drawEq(); initSch(); drawSch();
+/* TIMSS */
+let tmDomain = 'MATH';
+const TNM = {}; arr(TIMSS.names).forEach(r => { TNM[r.CNT] = r.zh; });
+const tnm = c => TNM[c] || c;
+function initTm() {
+  seg($('#tmDomain'), [{value:'MATH',label:'數學'},{value:'SCIE',label:'科學'}],
+    tmDomain, v => { tmDomain = v; initTm(); drawTm(); });
+}
+function drawTm() {
+  const d = tmDomain.toLowerCase();
+  showFig('tmRankFigs', 'timss_rank_' + d);
+  showFig('tmBenchFigs', 'timss_bench_' + d);
+  const rows = arr(TIMSS.means).filter(r => r.domain === tmDomain).sort((a,b) => a.rank - b.rank);
+  const tw = rows.find(r => r.CNT === 'TWN');
+  const adv = arr(TIMSS.bench).find(r => r.CNT === 'TWN' && r.domain === tmDomain && r.bench === 'Advanced');
+  $('#timssTiles').innerHTML = [
+    ['臺灣分數', tw ? fmt(tw.mean) : '—', tw ? '第 ' + tw.rank + ' 名／共 ' + TIMSS.meta.n_country : ''],
+    ['達高階基準', adv ? fmt(adv.pct) + '%' : '—', '625 分以上'],
+    ['參與經濟體', TIMSS.meta.n_country, '八年級'],
+    ['學生數', TIMSS.meta.n_student.toLocaleString('en-US'), '未加權'],
+    ['推估值 × 折刀', '5 × JK2', 'PISA 為 10 × Fay BRR']
+  ].map(t => '<div class="tile"><div class="k">' + t[0] + '</div><div class="v">' + t[1] +
+    '</div><div class="n">' + t[2] + '</div></div>').join('');
+
+  const bIdx = {};
+  arr(TIMSS.bench).forEach(r => { bIdx[r.CNT + '|' + r.domain + '|' + r.bench] = r; });
+  const BN = ['Low','Intermediate','High','Advanced'];
+  const BL = {Low:'低標 400+', Intermediate:'中標 475+', High:'高標 550+', Advanced:'高階 625+'};
+  let h = '<thead><tr><th>#</th><th>國家／經濟體</th><th>平均</th><th>SE</th>';
+  BN.forEach(b => { h += '<th>' + BL[b] + '</th>'; });
+  h += '<th>樣本數</th></tr></thead><tbody>';
+  rows.forEach(r => {
+    h += '<tr' + (r.CNT === 'TWN' ? ' class="me"' : '') + '><td>' + r.rank + '</td><td>' + tnm(r.CNT) + '</td>' +
+      '<td>' + fmt(r.mean) + '</td><td>' + fmt(r.se, 2) + '</td>';
+    BN.forEach(b => {
+      const x = bIdx[r.CNT + '|' + r.domain + '|' + b];
+      h += '<td>' + (x ? fmt(x.pct) : '—') + '</td>';
+    });
+    h += '<td>' + r.n.toLocaleString('en-US') + '</td></tr>';
+  });
+  $('#timssTable').innerHTML = h + '</tbody>';
+}
+(function designTable() {
+  const rows = [
+    ['PISA', '重複橫斷', '15 歲學生', '10', 'Fay BRR（80 組重複權重）', 'lib_pisa.R'],
+    ['TIMSS', '重複橫斷', '四／八年級', '5', 'JK2 折刀（JKZONE／JKREP）', 'lib_timss.R'],
+    ['TASA', '重複橫斷', '國中小各年級', '依年份', '依技術報告', '待資料到位'],
+    ['TEPS／TEPS-B', '追蹤（panel）', '同一批學生多波', '多波測量', '追蹤樣本權重', '待資料到位']
+  ];
+  let h = '<thead><tr><th>資料庫</th><th>設計</th><th>對象</th><th>推估值</th>' +
+          '<th>變異數估計</th><th>估計核心</th></tr></thead><tbody>';
+  rows.forEach(r => {
+    h += '<tr><td>' + r[0] + '</td>' + r.slice(1).map(x => '<td>' + x + '</td>').join('') + '</tr>';
+  });
+  $('#designTable').innerHTML = h + '</tbody>';
+})();
+
+initTr(); initLE(); drawLE(); initCty(); drawCty(); initEq(); drawEq(); initSch(); drawSch(); initTm(); drawTm();
 
 /*__DL_JS__*/
 </script>
