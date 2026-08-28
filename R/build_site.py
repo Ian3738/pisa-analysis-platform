@@ -146,6 +146,8 @@ def build(target):
                   lambda _: (ROOT / "timss_data.json").read_text(), html, flags=re.S)
     html = re.sub(r"/\*__IEA_DATA__\*/.*?/\*__END__\*/",
                   lambda _: (ROOT / "iea_data.json").read_text(), html, flags=re.S)
+    html = re.sub(r"/\*__TALIS_DATA__\*/.*?/\*__END__\*/",
+                  lambda _: (ROOT / "talis_data.json").read_text(), html, flags=re.S)
 
     left = re.findall(r"<!--(?:FIG|FIGSET|DLBLOCK):[^>]+-->", html)
     left += re.findall(r"/\*__[A-Z_]+__\*/", html)

@@ -149,6 +149,11 @@ build_report <- function() {
   ICN2  <- setNames(as.data.table(IEA$iccs$names)$zh, as.data.table(IEA$iccs$names)$CNT)
   PSN   <- as.data.table(IEA$pirls_subnames); POS <- as.data.table(IEA$position)
   IEAN  <- setNames(as.data.table(IEA$names)$zh, as.data.table(IEA$names)$CNT)
+  TAL   <- fromJSON(file.path(PISA_ROOT, "web", "talis_data.json"))
+  TLT   <- as.data.table(TAL$teachers); TLP <- as.data.table(TAL$principals)
+  TL18  <- as.data.table(TAL$t2018$principals); TL18I <- as.data.table(TAL$t2018$idx)
+  TLINV <- as.data.table(TAL$t2018$invariance)
+  TLN   <- setNames(as.data.table(TAL$names)$zh, as.data.table(TAL$names)$CNT)
   TMM   <- as.data.table(TIM$means); TBEN <- as.data.table(TIM$bench)
   TNM   <- setNames(as.data.table(TIM$names)$zh, as.data.table(TIM$names)$CNT)
   gi <- function(cnt, cy, dm, col) { z <- ICC[CNT==cnt & cycle==cy & domain==dm]; if (nrow(z)) z[[col]] else NA }
@@ -184,7 +189,7 @@ build_report <- function() {
   doc <- body_add_fpar(doc, fpar(
     ftext("大型數據分析平台：國際大型評比結果分析", tx(16, bold = TRUE)), fp_p = P_CENTER))
   doc <- body_add_fpar(doc, fpar(
-    ftext("PISA、TIMSS、PIRLS 與 ICCS 的加權估計、學校層級分解與跨評比對照", tx(12)), fp_p = P_CENTER))
+    ftext("PISA、TIMSS、PIRLS、ICCS 與 TALIS 的加權估計、學校層級分解與跨評比對照", tx(12)), fp_p = P_CENTER))
   doc <- add_gap(doc)
   doc <- body_add_fpar(doc, fpar(ftext(
     sprintf("分析樣本：PISA %s 名、TIMSS %s 名、PIRLS %s 名、ICCS %s 名學生",
@@ -194,7 +199,7 @@ build_report <- function() {
             format(IEA$iccs$meta$n_student, big.mark = ",")), tx(11)),
     fp_p = P_CENTER))
   doc <- body_add_fpar(doc, fpar(ftext(
-    "資料來源：OECD PISA 公開使用檔、IEA TIMSS／PIRLS／ICCS 國際資料庫",
+    "資料來源：OECD PISA 與 TALIS 公開使用檔、IEA TIMSS／PIRLS／ICCS 國際資料庫",
     tx(11)), fp_p = P_CENTER))
   doc <- body_add_fpar(doc, fpar(ftext(
     paste0("報告產生日期：", format(Sys.Date(), "%Y 年 %m 月 %d 日")), tx(12)), fp_p = P_CENTER))
@@ -651,8 +656,79 @@ build_report <- function() {
 
   doc <- body_add_break(doc)
 
-  # ---------- 玖、結論與限制 ----------
-  doc <- add_h1(doc, "玖、結論與研究限制")
+  # ---------- 玖、TALIS ----------
+  doc <- add_h1(doc, "玖、教師與校長調查結果")
+  doc <- add_h2(doc, "一、資料與估計方法")
+  doc <- add_body(doc, sprintf(
+    "教學與學習國際調查（Teaching and Learning International Survey, TALIS）由 OECD 主辦，調查對象為國中階段的教師與校長，而非學生。TALIS 不施測學業成就，因此不產生合理推估值，量表分數由題項直接合成。變異數以 Fay 平衡重複半樣本法估計，重複權重為 %d 組（PISA 為 80 組），Fay 係數 k = 0.5。",
+    TAL$meta$G))
+  doc <- add_body(doc, sprintf(
+    "本研究納入兩個輪次。TALIS 2024 共 %d 個參與者、%s 名教師與 %s 名校長，臺灣未參加該輪。臺灣參加的是 TALIS 2018，樣本為 %d 位國中校長。兩輪的量表題項與計分方式不同，不可跨輪比較，故以下分別呈現。",
+    TAL$meta$n_country, format(TAL$meta$n_teacher, big.mark = ","),
+    format(TAL$meta$n_principal, big.mark = ","), TAL$t2018$meta$n_principal))
+  doc <- add_body(doc,
+    "TALIS 的技術文件僅載明變異數以平衡重複半樣本法估計，未直接指明係採傳統 BRR 或 Fay 法，而兩者的縮放係數不同。本研究不倚賴文件記載，改以資料本身判定：檢查重複權重與最終權重的比值，其取值集中於 0.5 與 1.5，對應 Fay 係數 k = 0.5；若為傳統 BRR，比值應集中於 0 與 2。")
+  doc <- add_body(doc,
+    "以 survey 套件交叉驗證時另有一項易被忽略之處。該套件的 svrepdesign 預設 mse = FALSE，離差取自重複估計值的平均，而技術報告要求取自全樣本估計值。設定 mse = TRUE 後，本研究的實作與其差異為 5.55 × 10 的負 17 次方，屬浮點運算誤差；採預設值則有約 2% 的差距。")
+
+  doc <- add_h2(doc, "二、TALIS 2024 國際結果")
+  doc <- add_figure(doc, fn, "talis_selfeff",
+    "TALIS 2024 教師自我效能感：各參與者平均與 95% 信賴區間",
+    sprintf("共 %d 個參與者。日本教師的自我效能感 %.2f 為全體最低，且與第二低者有明顯差距。東亞四個參與體制中，越南反而偏高。臺灣未參加此輪。",
+            TAL$meta$n_country,
+            min(TLT[idx == "T4SELF"]$mean))); fn <- fn + 1
+  doc <- add_figure(doc, fn, "talis_scatter",
+    "教師自我效能感與工作滿意度的國家層級關聯",
+    sprintf("每一點為一個參與者的加權平均。兩者呈正向關聯，惟日本、韓國與新加坡系統性地落在左下象限：學生成就名列前茅的體制，其教師的自我效能感與工作滿意度反而偏低。日本工作滿意度 %.2f 亦為全體最低。",
+            min(TLT[idx == "T4JOBSAT"]$mean))); fn <- fn + 1
+  doc <- add_figure(doc, fn, "talis_prin_tch",
+    "教師問卷與校長問卷估計值的國家層級並列",
+    "教師問卷與校長問卷分屬不同樣本，使用不同的權重與重複權重組（TCHWGT 與 SCHWGTC），兩者不可於個體層次配對。本圖呈現的是同一參與者在兩份問卷上的國家層級估計值，非個體層次的對應關係。"); fn <- fn + 1
+
+  doc <- add_h2(doc, "三、量表的測量不變性：一個不會報錯的陷阱")
+  doc <- add_body(doc, sprintf(
+    "分析 TALIS 2018 校長問卷時，本研究發現 %d 個量表中有 %d 個算出的各國加權平均幾乎完全相同。以校園違規與暴力量表（T3PDELI）為例，個體分數介於 2.277 至 20.323，未加權的各國平均亦介於 6.763 至 7.440，但加權後 %d 個參與者的平均全部落在 6.8500 至 6.8504 之間，全距僅 0.001。",
+    nrow(TLINV), TLINV[range < 0.01, .N], TL18[idx == "T3PAUTS", .N]))
+  doc <- add_body(doc,
+    "本研究先以手算的加權平均逐國核對，結果與估計核心完全一致，確認並非程式錯誤後方回頭檢視量表本身。原因記載於變數標籤：這些量表標示為 Configural 或 Metric，即僅達構形不變性或metric不變性。對於未達純量不變性（scalar invariance）的量表，TALIS 於各參與者內部進行中心化，各國平均因而被設計成相等，比較其平均數等同於比較捨入誤差。")
+  doc <- add_body(doc,
+    "若未查核標籤而直接排序，會得到「臺灣校園違規程度在 47 個參與者中排名第 3 高」這類結論——分數差異在小數點後第四位，卻被轉換成名次。此一錯誤不會產生任何警告訊息，估計程序本身完全正確，錯的是把不可比較的量表拿來比較。本研究因此僅採用實質具跨國變異的九個量表進行後續分析，其全距介於 1.1 至 2.8，相異值 43 至 47 個。")
+  doc <- add_body(doc,
+    "標示為部分純量不變的教學領導量表（T3PLEADS）雖有 3.206 的全距，但 47 個參與者僅呈現 12 個相異值，顯示多數參與者仍被中心化，其名次不可靠，故一併排除。TALIS 2024 的量表標籤未帶不變性限定詞，且實際變異充分（教師自我效能感介於 7.14 至 12.04，55 個參與者呈現 55 個相異值），本章第二節的跨國比較不受此問題影響。")
+
+  tinv <- TLINV[order(range)][, .(
+    量表 = v, 不變性 = ifelse(不變性 == "" | is.na(不變性), "未標示", 不變性),
+    全距 = sprintf("%.3f", range), 相異值數 = distinct, 參與者數 = n_country)]
+  doc <- add_table(doc, 11, apa_table(head(tinv, 20)),
+    "TALIS 2018 校長量表的測量不變性層級與實際跨國變異",
+    "依全距由小至大排序，列出前 20 個量表。全距為各參與者加權平均的最大值減最小值。全距趨近於零者，係因 TALIS 於各參與者內部中心化，其平均數不具跨國比較意義。相異值數為四捨五入至小數點後三位後的相異平均數個數。")
+
+  doc <- add_h2(doc, "四、TALIS 2018 臺灣校長結果")
+  tw18 <- merge(TL18[CNT == "TWN"], TL18I, by.x = "idx", by.y = "code")[order(rank)]
+  doc <- add_body(doc, sprintf(
+    "臺灣在 TALIS 2018 的 %d 位校長樣本上呈現一組互補的形態（各量表有效樣本 %d 至 %d 位）。資源面相對充裕：教材不足排第 %d、教學人力不足排第 %d、整體資源不足排第 %d（共 %d 個參與者，名次依短缺程度由高至低排列，故名次越後代表短缺越少）。自主權面則相對受限：教育政策自主排第 %d、預算自主排第 %d，均低於全體中位數；人事自主為唯一略高於中位數者，排第 %d。",
+    TAL$t2018$meta$n_twn, min(tw18$n), max(tw18$n),
+    tw18[idx == "T3PLACMA"]$rank, tw18[idx == "T3PLACPE"]$rank,
+    tw18[idx == "T3PLACRE"]$rank, tw18[idx == "T3PAUTS"]$ntot,
+    tw18[idx == "T3PAUTP"]$rank, tw18[idx == "T3PAUTB"]$rank,
+    tw18[idx == "T3PAUTS"]$rank))
+  doc <- add_figure(doc, fn, "talis18_tw",
+    "TALIS 2018 臺灣校長指標與全體中位數之差",
+    sprintf("正值代表高於全體中位數。共 %d 個參與者，僅採實質可跨國比較的九個量表。資源短缺類的名次依短缺程度由高至低排列，故名次越後代表短缺程度越低。臺灣未參加 TALIS 2024，故本圖無法與該輪對照。",
+            tw18[idx == "T3PAUTS"]$ntot)); fn <- fn + 1
+
+  t11 <- data.table(
+    指標 = tw18$zh, 臺灣 = sprintf("%.2f", tw18$mean), SE = sprintf("%.3f", tw18$se),
+    名次 = tw18$rank, 參與者數 = tw18$ntot,
+    `百分位 %` = sprintf("%.1f", 100 * (1 - (tw18$rank - 1) / tw18$ntot)))
+  doc <- add_table(doc, 12, apa_table(t11), "TALIS 2018 臺灣校長各指標估計值與國際位置",
+    sprintf("標準誤以 Fay 平衡重複半樣本法估計，%d 組重複權重，Fay 係數 k = 0.5，權重為 SCHWGT 與 SRWGT1 至 SRWGT%d。名次依分數由高至低排列；資源短缺類量表分數越高代表短缺越嚴重，故該類名次越後代表狀況越佳。",
+            TAL$meta$G, TAL$meta$G))
+
+  doc <- body_add_break(doc)
+
+  # ---------- 拾、結論與限制 ----------
+  doc <- add_h1(doc, "拾、結論與研究限制")
   doc <- add_h2(doc, "一、主要發現")
   doc <- add_body(doc, sprintf(
     "第一，臺灣學生在兩套國際評比中均居前列，惟兩者測量的構念不同。PISA 2022 數學排名第 %d、科學第 %d、閱讀第 %d；TIMSS 2023 八年級數學與科學均排名第 2。前者測應用素養，後者測課程本位的學習成果，兩項評比在 %d 個共同參與的經濟體間相關達 %.3f，臺灣在兩者皆表現優異，顯示課程實施與素養轉化均有成效。",
@@ -689,7 +765,14 @@ build_report <- function() {
   doc <- add_body(doc,
     "第三，不同資料庫不可共用同一套分析程式。TIMSS 與 PIRLS 使用 5 個合理推估值與 JK2 折刀法，PISA 使用 10 個推估值與 Fay 平衡重複半樣本法。將 PISA 的程式直接套用於 IEA 系列評比不會產生錯誤訊息，但標準誤是錯的。本研究為此另行撰寫估計核心，並以獨立實作逐位數驗證；TIMSS 與 PIRLS 因設計相同，可共用同一核心。")
   doc <- add_body(doc,
+    "第五，量表分數在使用前必須查核其測量不變性層級。本研究於 TALIS 2018 的 20 個校長量表中發現 7 個的各國加權平均全距不足 0.01，原因是該類量表未達純量不變性，資料提供者已於各參與者內部進行中心化。直接排名會把小數點後第四位的差異轉換成名次，且整個過程不會產生任何警告訊息。變數標籤所載的不變性層級，應與權重、推估值同列為分析前的必要查核項目。")
+  doc <- add_body(doc,
     "第四，設計基礎分解與模型基礎的變異成分是不同的估計標的，不宜互相取代或視為驗證失敗。本研究對同一份資料所得的 0.405 與 0.422、0.455，差異來自估計標的與權重縮放方式，三者的總變異數本身即不相同。研究報告宜明確交代所採用的定義。")
+
+  doc <- add_body(doc, sprintf(
+    "第七，教師與校長層面的資料呈現另一組議題。TALIS 2018 顯示臺灣校長回報的資源短缺程度在 %d 個參與者中排名倒數（教材不足第 %d、教學人力不足第 %d），但學校自主權亦偏低（教育政策自主第 %d、預算自主第 %d）。TALIS 2024 則顯示日本教師的自我效能感與工作滿意度均為 %d 個參與者中最低，且日本、韓國、新加坡三個學生成就名列前茅的體制，其教師的效能感與滿意度皆落在分布的左下象限。學生表現與教師感受並非同向，此一落差值得在政策討論中一併考量。",
+    tw18[idx == "T3PAUTS"]$ntot, tw18[idx == "T3PLACMA"]$rank, tw18[idx == "T3PLACPE"]$rank,
+    tw18[idx == "T3PAUTP"]$rank, tw18[idx == "T3PAUTB"]$rank, TAL$meta$n_country))
 
   doc <- add_h2(doc, "三、研究限制")
   doc <- add_body(doc,
@@ -703,7 +786,9 @@ build_report <- function() {
   doc <- add_body(doc,
     "第五，PISA 2012 年以前的輪次未納入。OECD 於 2024 年改版官方網站，舊有檔案網址失效，新頁面啟用人機驗證機制，無法以程式自動取得。此部分需以人工方式下載，且提供的是 ASCII 定寬檔配合統計軟體讀取語法，而非現成的資料檔。")
   doc <- add_body(doc,
-    "第六，臺灣本土大型資料庫尚未納入。TASA 與 TEPS 均需經申請程序方能取得，本研究已完成接入流程的建置，惟資料到位前無法進行實際分析。TEPS 為其中唯一的追蹤設計，若能納入，將可補足本研究在個人成長軌跡上的空缺。")
+    "第六，TALIS 兩輪之間不可比較，且臺灣僅有單一輪次。TALIS 2018 與 2024 的量表題項與計分方式不同，本研究未進行跨輪比較。臺灣參加 2018 而未參加 2024，因此臺灣的教師與校長資料僅有單一時點，無法檢視變化趨勢；本研究的 2024 年結果不含臺灣數值。")
+  doc <- add_body(doc,
+    "第七，臺灣本土大型資料庫尚未納入。TASA 與 TEPS 均需經申請程序方能取得，本研究已完成接入流程的建置，惟資料到位前無法進行實際分析。TEPS 為其中唯一的追蹤設計，若能納入，將可補足本研究在個人成長軌跡上的空缺。")
 
   doc <- body_add_break(doc)
   doc <- add_h1(doc, "參考文獻")

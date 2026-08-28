@@ -704,6 +704,77 @@ footer .fl { display:flex; flex-wrap:wrap; gap:6px 24px; }
     </div>
   </section>
 
+  <!-- ============ TALIS ============ -->
+  <section class="panel" id="p-talis" role="tabpanel" aria-labelledby="t-talis">
+    <div class="sec">
+      <div class="eyebrow">OECD · 教學與學習國際調查</div>
+      <h2>TALIS 2024 與 2018</h2>
+      <p class="lead">TALIS 問的不是學生，而是<strong>教師與校長</strong>。它沒有成就測驗，因此也沒有合理推估值——量表分數直接由題項合成。變異數以 Fay 平衡重複半樣本法估計，100 組重複權重（PISA 為 80 組）。</p>
+      <div class="warnbox">
+        <h3>臺灣參加 2018、未參加 2024</h3>
+        <p>TALIS 2024 的 55 個參與者含日本、韓國、新加坡與越南，但沒有臺灣，該輪結果為國際脈絡。臺灣參加的是 <strong>TALIS 2018</strong>，樣本為 <strong>202 位國中校長</strong>（校長問卷；各量表有效樣本 199–200 位），故本頁的臺灣數值全部來自 2018 輪。兩輪的量表題項與計分不同，<strong>不可跨輪比較</strong>。</p>
+      </div>
+      <div class="tiles" id="talisTiles" style="margin:22px 0 26px"></div>
+    </div>
+
+    <div class="stack">
+      <figure>
+        <div class="figbox"><!--FIG:talis_selfeff--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · Fay BRR 100 組重複權重</div>
+        <figcaption>日本教師的自我效能感 7.14 為 55 個參與者中最低，且與第二低者有明顯差距。東亞四地（日本、韓國、新加坡、越南）中，越南反而偏高。</figcaption>
+      </figure>
+
+      <figure>
+        <div class="figbox"><!--FIG:talis_scatter--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 國家層級對照</div>
+        <figcaption>自我效能感與工作滿意度高度相關，但日本、韓國、新加坡系統性地落在左下角——學生成就名列前茅的體制，教師的效能感與滿意度反而偏低。</figcaption>
+      </figure>
+
+      <figure>
+        <div class="figbox"><!--FIG:talis_prin_tch--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 兩份問卷的國家層級對照</div>
+        <figcaption>教師問卷與校長問卷分屬不同樣本、使用不同權重（TCHWGT 與 SCHWGTC），此圖為國家層級的並列，非個體層級的配對。</figcaption>
+      </figure>
+
+      <figure>
+        <div class="figbox"><!--FIG:talis18_tw--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · Fay BRR 100 組重複權重 · TALIS 2018 校長問卷</div>
+        <figcaption>臺灣 2018 年的校長樣本呈現一組互補的形態：<strong>資源相對充裕</strong>——教材不足排第 43、教學人力不足排第 41、整體資源不足排第 42（共 47 個參與者，名次為短缺程度由高至低，故名次越後代表短缺越少）；但<strong>學校自主權偏低</strong>——教育政策自主排第 40、預算自主排第 36，皆低於全體中位數。人事自主是唯一略高於中位數者（第 21）。此處僅採用九項實質可跨國比較的量表，理由見下方方法註記。</figcaption>
+      </figure>
+    </div>
+
+    <div class="sec">
+      <h2>各國數值</h2>
+      <div class="controls">
+        <div class="ctl-group"><span class="ctl-label">對象</span>
+          <div class="seg" id="talWho" role="group" aria-label="選擇對象"></div></div>
+        <div class="ctl-group"><span class="ctl-label">指標</span>
+          <div class="seg" id="talIdx" role="group" aria-label="選擇指標"></div></div>
+      </div>
+      <div class="tablewrap"><table id="talisTable"></table></div>
+    </div>
+
+    <div class="sec">
+      <div class="eyebrow">方法註記</div>
+      <h2>Fay 係數是從資料判定的</h2>
+      <div class="prose">
+        <p>TALIS 的技術文件說明變異數以平衡重複半樣本法估計，但傳統 BRR 與 Fay 法的縮放係數不同，用錯會讓標準誤系統性偏誤。本平台不倚賴文件記載，而是直接檢查重複權重與最終權重的比值：取值集中於 <code>0.5</code> 與 <code>1.5</code>，對應 Fay 係數 <code>k = 0.5</code>（若為傳統 BRR 會集中於 <code>0</code> 與 <code>2</code>）。</p>
+        <p>驗證時另有一個容易踩的坑：以 <code>survey</code> 套件比對時，其預設 <code>mse = FALSE</code> 會把離差取自 100 個重複估計值的平均，而技術報告要求取自全樣本估計值。設為 <code>mse = TRUE</code> 後，本平台的實作與其差異為 5.55 × 10⁻¹⁷，即浮點運算的雜訊。預設值下則會有約 2% 的差距。</p>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="eyebrow">方法註記</div>
+      <h2>不是每一個量表都能拿來排名</h2>
+      <div class="prose">
+        <p>TALIS 2018 的 20 個校長量表中，有 7 個算出來的各國加權平均<strong>幾乎完全相同</strong>。以「校園違規與暴力」（<code>T3PDELI</code>）為例，個體分數在 2.277 至 20.323 之間有充分變異，未加權的各國平均也介於 6.763 至 7.440，但加權後 47 個參與者的平均全部落在 <code>6.8500</code> 至 <code>6.8504</code>——全距僅 <strong>0.001</strong>。</p>
+        <p>這不是程式錯誤。本平台先以手算的 <code>Σxw / Σw</code> 逐國核對，結果與估計核心完全一致，確認計算無誤後才回頭查量表本身。答案寫在變數標籤裡：這些量表標示為 <strong>Configural</strong> 或 <strong>Metric</strong>，即僅達構形或metric不變性。TALIS 對未達純量不變性（scalar invariance）的量表會在<strong>各國內部進行中心化</strong>，各國平均因而被設計成相等，<strong>比較平均數等同於比較捨入誤差</strong>。</p>
+        <p>若不查標籤直接排名，會得到「臺灣校園違規程度為 47 個參與者中第 3 高」這樣的結論——分數差距在小數點第四位，卻被排成名次。本平台因此只採用實質有變異的九項量表（學校自主五項、資源短缺三項、多元文化信念一項，全距 1.1 至 2.8，相異值 43–47 個）繪製上方圖表。其中「多元文化信念」對部分國家群僅達構形不變性，惟其 47 個參與者呈現 47 個相異值，未見中心化的聚集現象，故予保留並單獨標示。連標示為部分純量不變的「教學領導」（<code>T3PLEADS</code>，全距 3.206）也被排除，因為 47 個參與者僅有 <strong>12 個相異值</strong>，代表多數國家仍被中心化，名次不可靠。</p>
+        <p>TALIS 2024 的量表標籤未帶不變性限定詞，且實際變異充分（教師自我效能感 7.14–12.04，55 個參與者 55 個相異值），故本頁 2024 輪的跨國比較不受此問題影響。</p>
+      </div>
+    </div>
+  </section>
+
   <!-- ============ 跨評比對照 ============ -->
   <section class="panel" id="p-cross" role="tabpanel" aria-labelledby="t-cross">
     <div class="sec">
@@ -899,6 +970,7 @@ const ZH   = /*__ZH_DATA__*/ {} /*__END__*/;
 const SCHOOL = /*__SCHOOL_DATA__*/ null /*__END__*/;
 const OPT = /*__OPT_DATA__*/ null /*__END__*/;
 const TIMSS = /*__TIMSS_DATA__*/ null /*__END__*/;
+const TALIS = /*__TALIS_DATA__*/ null /*__END__*/;
 const IEA = /*__IEA_DATA__*/ null /*__END__*/;
 
 const $  = (s, r) => (r || document).querySelector(s);
@@ -973,7 +1045,7 @@ const TABS = [
   ['link','PISA 連結誤差','pisa'],    ['country','PISA 各國比較','pisa'],
   ['equity','PISA 公平性','pisa'],    ['school','PISA 學校層級','pisa'],
   ['extra','PISA 選考領域','pisa'],   ['timss','TIMSS','timss'],
-  ['pirls','PIRLS','pirls'],          ['iccs','ICCS','iccs'],
+  ['pirls','PIRLS','pirls'],          ['iccs','ICCS','iccs'],           ['talis','TALIS','talis'],
   ['cross','跨評比對照','cross'],     ['method','方法學','meta'],
   ['system','系統','meta']];
 
@@ -984,7 +1056,7 @@ const DS_FILTER = {
   timss: ['home','timss','cross','method','system'],
   pirls: ['home','pirls','cross','method','system'],
   iccs:  ['home','iccs','cross','method','system'],
-  talis: ['home','cross','method','system']
+  talis: ['home','talis','cross','method','system']
 };
 const DS_LABEL = { all:'全部', pisa:'PISA', timss:'TIMSS', pirls:'PIRLS', iccs:'ICCS', talis:'TALIS' };
 
@@ -1038,6 +1110,10 @@ const TAB_CTX = {
     d: 'ICCS 2022 八年級公民知識，<span class="n">24</span> 個參與者、<span class="n">8.2 萬</span>名學生',
     q: '公民與公民素養知識，臺灣的位置？',
     f: '臺灣 583.1 分<em>居首</em>，領先第 2 名瑞典 18.4 分——十項評比中相對位置最高'},
+  talis: {
+    d: 'TALIS 2024 教師與校長調查（<span class="n">55</span> 個參與者）＋ TALIS 2018 臺灣校長（<span class="n">202</span> 位）',
+    q: '教師的自我效能感與工作滿意度如何？臺灣的學校自主權與資源狀況？',
+    f: '日本教師自我效能感 7.14 與工作滿意度 8.64 皆為全體最低；<em>臺灣 2018 年學校自主權偏低、資源相對充裕</em>'},
   cross: {
     d: '五套評比十個項目的對照，以及各資料庫的設計差異',
     q: '換一套主辦單位、換一種測驗取向，結論會一樣嗎？',
@@ -1066,10 +1142,10 @@ const DATASETS = [
   {ds:'iccs',  org:'IEA', nm:'ICCS 2022', sub:'國際公民教育與素養調查 · 八年級',
    rows:[['學生','8.2 萬名'],['參與','24 個'],['分析','1 個分頁']],
    res:'臺灣<b>第 1 名</b>，領先第 2 名瑞典 18.4 分'},
-  {ds:'talis', org:'OECD', nm:'TALIS 2024', sub:'教學與學習國際調查 · 教師與校長',
-   rows:[['校長','1.16 萬名'],['參與','55 國'],['分析','建置中']],
-   res:'<b>臺灣未參加此輪</b>；日本校長工作滿意度為全體最低',
-   disabled:true}
+  {ds:'talis', org:'OECD', nm:'TALIS 2024 · 2018', sub:'教學與學習國際調查 · 教師與校長',
+   rows:[['教師','19.5 萬名'],['校長','1.16 萬名'],['參與','55／47 個']],
+   rows2:null,
+   res:'臺灣<b>參加 2018、未參加 2024</b>；2018 學校自主權排第 <b>36–40</b>，資源短缺排第 <b>41–43</b>'}
 ];
 
 let curDS = 'all';
@@ -1589,7 +1665,45 @@ function drawIccs() {
   $('#designTable').innerHTML = h + '</tbody>';
 })();
 
-initTr(); initLE(); drawLE(); initCty(); drawCty(); initEq(); drawEq(); initSch(); drawSch(); initTm(); drawTm(); drawPirls(); drawIccs();
+initTr(); initLE(); drawLE(); initCty(); drawCty(); initEq(); drawEq(); /* TALIS */
+let talWho = 't', talIdx = 'T4SELF';
+const TALN = {}; arr(TALIS.names).forEach(r => { TALN[r.CNT] = r.zh; });
+function talIdxList() { return arr(talWho === 't' ? TALIS.idx_t : TALIS.idx_p); }
+function initTal() {
+  seg($('#talWho'), [{value:'t',label:'教師'},{value:'p',label:'校長'}], talWho, v => {
+    talWho = v; talIdx = talIdxList()[0].code; initTal(); drawTal(); });
+  const opts = talIdxList().slice(0, 6).map(x => ({value:x.code, label:x.zh}));
+  if (!opts.some(o => o.value === talIdx)) talIdx = opts[0].value;
+  seg($('#talIdx'), opts, talIdx, v => { talIdx = v; initTal(); drawTal(); });
+}
+function drawTal() {
+  const self = arr(TALIS.teachers).filter(r => r.idx === 'T4SELF').sort((a,b) => a.mean - b.mean);
+  const sat  = arr(TALIS.teachers).filter(r => r.idx === 'T4JOBSAT').sort((a,b) => a.mean - b.mean);
+  $('#talisTiles').innerHTML = [
+    ['參與者', TALIS.meta.n_country, '不含臺灣'],
+    ['教師', (TALIS.meta.n_teacher/10000).toFixed(1) + ' 萬', '國中教師'],
+    ['校長', (TALIS.meta.n_principal/10000).toFixed(2) + ' 萬', '國中校長'],
+    ['自我效能最低', self.length ? TALN[self[0].CNT] || self[0].CNT : '—',
+     self.length ? fmt(self[0].mean, 2) : ''],
+    ['滿意度最低', sat.length ? TALN[sat[0].CNT] || sat[0].CNT : '—',
+     sat.length ? fmt(sat[0].mean, 2) : '']
+  ].map(t => '<div class="tile"><div class="k">' + t[0] + '</div><div class="v">' + t[1] +
+    '</div><div class="n">' + t[2] + '</div></div>').join('');
+
+  const src = arr(talWho === 't' ? TALIS.teachers : TALIS.principals).filter(r => r.idx === talIdx);
+  const rows = src.slice().sort((a,b) => b.mean - a.mean);
+  const label = (talIdxList().find(x => x.code === talIdx) || {}).zh || talIdx;
+  let h = '<thead><tr><th>#</th><th>國家／經濟體</th><th>' + label + '</th><th>SE</th>' +
+          '<th>樣本數</th></tr></thead><tbody>';
+  rows.forEach((r, i) => {
+    h += '<tr><td>' + (i+1) + '</td><td>' + (TALN[r.CNT] || r.CNT) + '</td><td>' +
+      fmt(r.mean, 2) + '</td><td>' + fmt(r.se, 3) + '</td><td>' +
+      r.n.toLocaleString('en-US') + '</td></tr>';
+  });
+  $('#talisTable').innerHTML = h + '</tbody>';
+}
+
+initSch(); drawSch(); initTm(); drawTm(); drawPirls(); drawIccs(); initTal(); drawTal();
 
 /*__DL_JS__*/
 </script>
