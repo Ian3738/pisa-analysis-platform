@@ -28,6 +28,10 @@ KEEP_PATTERNS <- c(
   #   MATC/REAC/SCIC=在創造思考子樣本上重算的三科（CRT 檔）
   #   MC**/MP**=數學的內容與歷程分測驗（2022 主檔）
   "^PV[0-9]+(MATH|READ|SCIE|GLCM|CLPS|CPRO|FLIT|CRTH|MATC|REAC|SCIC)",
+  # 2022 數學分測驗：內容向度 MC** 與歷程向度 MP**
+  #   MCCR 變化與關係、MCQN 數量、MCSS 空間與形狀、MCUD 不確定性與資料
+  #   MPFS 形成、MPEM 應用、MPIN 詮釋、MPRE 推理
+  "^PV[0-9]+(MCCR|MCQN|MCSS|MCUD|MPEM|MPFS|MPIN|MPRE)$",
   # 社經地位
   "^ESCS$", "^HISEI$", "^HOMEPOS$", "^PAREDINT$", "^BMMJ1$", "^BFMJ2$",
   "^MISCED$", "^FISCED$", "^HISCED$", "^ICTRES$", "^CULTPOSS$", "^HEDRES$", "^WEALTH$",

@@ -487,6 +487,47 @@ footer .fl { display:flex; flex-wrap:wrap; gap:6px 24px; }
     </div>
   </section>
 
+  <!-- ============ 選考領域與分測驗 ============ -->
+  <section class="panel" id="p-extra" role="tabpanel" aria-labelledby="t-extra">
+    <div class="sec">
+      <div class="eyebrow">核心三領域之外</div>
+      <h2>創造思考、財金素養與數學分測驗</h2>
+      <p class="lead">PISA 2022 除了數學、閱讀、科學，還有兩個選考領域與數學的八個分測驗。這些資料與核心領域一起發布，卻很少被使用。</p>
+      <div class="tiles" id="extraTiles" style="margin-bottom:26px"></div>
+    </div>
+
+    <div class="stack">
+      <figure>
+        <div class="figbox"><!--FIG:crt_vs_math--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 合理推估值 × Fay 重複權重</div>
+        <figcaption>數學名次遠優於創造思考名次的前三名是澳門（差 19 名）、香港（18 名）與臺灣（13 名）。韓國只差 4 名、新加坡兩項皆為第 1，可見這並非東亞的共同現象。</figcaption>
+      </figure>
+
+      <figure>
+        <div class="figbox"><!--FIG:crt_rank--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 併回主檔取得權重後估計</div>
+        <figcaption>創造思考的認知檔本身不含權重，須以學生編號併回主學生檔。63 個國家與經濟體參加，涵蓋主檔 81.4% 的學生。</figcaption>
+      </figure>
+
+      <figure>
+        <div class="figbox"><!--FIG:subscale_profile--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 分測驗相對強弱</div>
+        <figcaption>臺灣八個向度只差 5.3 分，輪廓異常平坦。四個國家因採紙筆施測而無分測驗分數，屬設計使然而非資料缺漏。</figcaption>
+      </figure>
+
+      <figure>
+        <div class="figbox"><!--FIG:flit_rank--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 財金素養問卷檔</div>
+        <figcaption>僅 20 個國家與經濟體參加，臺灣未參加。推估值與權重在問卷檔，同一壓縮檔內的試題檔兩者皆無。</figcaption>
+      </figure>
+    </div>
+
+    <div class="sec">
+      <h2>各國數值</h2>
+      <div class="tablewrap"><table id="extraTable"></table></div>
+    </div>
+  </section>
+
   <!-- ============ 方法學 ============ -->
   <section class="panel" id="p-method" role="tabpanel" aria-labelledby="t-method">
     <div class="sec">
@@ -649,6 +690,7 @@ footer .fl { display:flex; flex-wrap:wrap; gap:6px 24px; }
 const DATA = /*__PISA_DATA__*/ null /*__END__*/;
 const ZH   = /*__ZH_DATA__*/ {} /*__END__*/;
 const SCHOOL = /*__SCHOOL_DATA__*/ null /*__END__*/;
+const OPT = /*__OPT_DATA__*/ null /*__END__*/;
 
 const $  = (s, r) => (r || document).querySelector(s);
 const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
@@ -718,7 +760,7 @@ function badge(sig) {
 /* 分頁 */
 const TABS = [['overview','總覽'], ['desc','描述統計'], ['trend','趨勢'], ['link','連結誤差'],
               ['country','各國比較'], ['equity','公平性'], ['school','學校層級'],
-              ['method','方法學'], ['system','系統']];
+              ['extra','選考領域'], ['method','方法學'], ['system','系統']];
 (function () {
   const host = $('#tablist');
   TABS.forEach(([id, label], i) => {
@@ -1016,6 +1058,45 @@ function drawSch() {
     });
   });
 }
+
+/* 選考領域與分測驗 */
+(function drawExtra() {
+  const crt = arr(OPT.crt), flt = arr(OPT.flt);
+  const byC = {}; crt.forEach(r => { byC[r.CNT] = r; });
+  const tw = byC[ME];
+  const twMath = IDX['m' + key(ME, 2022, 'MATH')];
+  const mrank = arr(DATA.means).filter(r => r.cycle === 2022 && r.domain === 'MATH' && r.mean !== null)
+    .sort((a, b) => b.mean - a.mean).findIndex(r => r.CNT === ME) + 1;
+  $('#extraTiles').innerHTML = [
+    ['創造思考', tw ? fmt(tw.crt) : '—', tw ? '第 ' + tw.rank + ' 名／共 ' + crt.length : ''],
+    ['數學', twMath ? fmt(twMath.mean) : '—', '第 ' + mrank + ' 名／共 80'],
+    ['名次落差', tw ? '+' + (tw.rank - mrank) : '—', '創造思考名次減數學名次'],
+    ['財金素養', '未參加', '僅 ' + flt.length + ' 國參加'],
+    ['數學分測驗', '8', '內容 4 向度 · 歷程 4 向度']
+  ].map(t => '<div class="tile"><div class="k">' + t[0] + '</div><div class="v">' + t[1] +
+    '</div><div class="n">' + t[2] + '</div></div>').join('');
+
+  const subs = arr(OPT.subscales);
+  const sIdx = {}; arr(OPT.sub).forEach(r => { sIdx[r.CNT + '|' + r.scale] = r; });
+  let h = '<thead><tr><th>國家／經濟體</th><th>數學</th><th>創造思考</th><th>名次落差</th>';
+  subs.forEach(x => { h += '<th>' + x.zh + '</th>'; });
+  h += '</tr></thead><tbody>';
+  crt.sort((a, b) => b.crt - a.crt).forEach(r => {
+    const m = IDX['m' + key(r.CNT, 2022, 'MATH')];
+    const mr = arr(DATA.means).filter(z => z.cycle === 2022 && z.domain === 'MATH' && z.mean !== null)
+      .sort((a, b) => b.mean - a.mean).findIndex(z => z.CNT === r.CNT) + 1;
+    h += '<tr' + (r.CNT === ME ? ' class="me"' : '') + '><td>' + nm(r.CNT) + '</td>' +
+      '<td>' + (m ? fmt(m.mean) : '—') + '</td><td>' + fmt(r.crt) + '</td>' +
+      '<td class="' + (r.rank - mr > 0 ? 'deltaneg' : 'deltapos') + '">' +
+      (r.rank - mr > 0 ? '+' : '') + (r.rank - mr) + '</td>';
+    subs.forEach(x => {
+      const v = sIdx[r.CNT + '|' + x.code];
+      h += '<td>' + (v ? (v.rel > 0 ? '+' : '') + fmt(v.rel) : '—') + '</td>';
+    });
+    h += '</tr>';
+  });
+  $('#extraTable').innerHTML = h + '</tbody>';
+})();
 
 initTr(); initLE(); drawLE(); initCty(); drawCty(); initEq(); drawEq(); initSch(); drawSch();
 
