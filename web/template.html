@@ -531,9 +531,9 @@ footer .fl { display:flex; flex-wrap:wrap; gap:6px 24px; }
   <!-- ============ TIMSS ============ -->
   <section class="panel" id="p-timss" role="tabpanel" aria-labelledby="t-timss">
     <div class="sec">
-      <div class="eyebrow">四套國際大型評比</div>
-      <h2>TIMSS、PIRLS 與 PISA 的對照</h2>
-      <p class="lead">TIMSS 與 PIRLS 由國際教育成就評鑑協會（IEA）主辦，測的是各國課程實際教過的內容；PISA 由 OECD 主辦，測的是把知識用在真實情境的能力。三者評的不是同一件事，把它們放在一起看，臺灣的輪廓才完整。</p>
+      <div class="eyebrow">五套國際大型評比</div>
+      <h2>TIMSS、PIRLS、ICCS 與 PISA 的對照</h2>
+      <p class="lead">TIMSS、PIRLS 與 ICCS 由國際教育成就評鑑協會（IEA）主辦，測的是各國課程實際教過的內容與公民素養；PISA 由 OECD 主辦，測的是把知識用在真實情境的能力。它們評的不是同一件事，把十項結果放在一起看，臺灣的輪廓才完整。</p>
       <div class="tiles" id="timssTiles" style="margin-bottom:26px"></div>
       <div class="controls">
         <div class="ctl-group"><span class="ctl-label">領域</span>
@@ -545,7 +545,7 @@ footer .fl { display:flex; flex-wrap:wrap; gap:6px 24px; }
       <figure>
         <div class="figbox"><!--FIG:taiwan_position--></div>
         <div class="rcredit"><span class="dot"></span>R · ggplot2 · 百分位換算</div>
-        <figcaption>九項評比的參與國數不同，故以百分位比較而非名次。臺灣在數學與科學各項皆在 96 百分位以上，但四年級閱讀落在 78.5、創造思考 76.2。這個落差不是量測誤差，而是穩定出現在不同評比、不同年齡、不同主辦單位的一致形態。</figcaption>
+        <figcaption>十項評比的參與者數不同，故以百分位比較而非名次。臺灣公民知識居首（百分位 100），數學與科學各項在 96 百分位以上，但四年級閱讀落在 78.5、創造思考 76.2。這個落差不是量測誤差，而是穩定出現在不同評比、不同年齡、不同主辦單位的一致形態。</figcaption>
       </figure>
 
       <figure>
@@ -576,6 +576,12 @@ footer .fl { display:flex; flex-wrap:wrap; gap:6px 24px; }
         <div class="figbox"><!--FIG:pirls_rank--></div>
         <div class="rcredit"><span class="dot"></span>R · ggplot2 · PIRLS 2021 四年級閱讀</div>
         <figcaption>臺灣 543.8 分排名第 15，是九項評比中相對位置最低者之一。部分參與者為次國家層級的標竿實體，如莫斯科市、加拿大各省、比利時語區。</figcaption>
+      </figure>
+
+      <figure>
+        <div class="figbox"><!--FIG:iccs_rank--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · ICCS 2022 公民知識</div>
+        <figcaption>臺灣 583.1 分居 24 個參與者之首，領先第 2 名瑞典 18.4 分。這是臺灣在十項國際評比中相對位置最高的一項，與創造思考的第 16 名形成強烈對比。參與者含德國兩個邦，屬次國家層級。</figcaption>
       </figure>
 
       <figure>
@@ -846,7 +852,7 @@ function badge(sig) {
 /* 分頁 */
 const TABS = [['overview','總覽'], ['desc','描述統計'], ['trend','趨勢'], ['link','連結誤差'],
               ['country','各國比較'], ['equity','公平性'], ['school','學校層級'],
-              ['extra','選考領域'], ['timss','TIMSS／PIRLS'], ['method','方法學'], ['system','系統']];
+              ['extra','選考領域'], ['timss','IEA 評比'], ['method','方法學'], ['system','系統']];
 (function () {
   const host = $('#tablist');
   TABS.forEach(([id, label], i) => {
@@ -1217,14 +1223,25 @@ const IEAN = {}; arr(IEA.names).forEach(r => { IEAN[r.CNT] = r.zh; });
 const inm = c => IEAN[c] || TNM[c] || c;
 function initTb() {
   seg($('#tbSel'), [{value:'g8',label:'TIMSS 八年級'},{value:'g4',label:'TIMSS 四年級'},
-                    {value:'pirls',label:'PIRLS 閱讀'}],
+                    {value:'pirls',label:'PIRLS 閱讀'},{value:'iccs',label:'ICCS 公民'}],
     tbSel, v => { tbSel = v; initTb(); drawTmTable(); });
 }
 function drawTmTable() {
   const BN = ['Low','Intermediate','High','Advanced'];
   const BL = {Low:'低標 400+', Intermediate:'中標 475+', High:'高標 550+', Advanced:'高階 625+'};
   let h = '', rows, bIdx = {};
-  if (tbSel === 'pirls') {
+  if (tbSel === 'iccs') {
+    const inames = {}; arr(IEA.iccs.names).forEach(r => { inames[r.CNT] = r.zh; });
+    rows = arr(IEA.iccs.means).slice().sort((a,b) => a.rank - b.rank);
+    h = '<thead><tr><th>#</th><th>參與者</th><th>公民知識</th><th>SE</th>' +
+        '<th>抽樣 SE</th><th>推估 SE</th><th>折刀區</th><th>樣本數</th></tr></thead><tbody>';
+    rows.forEach(r => {
+      h += '<tr' + (r.CNT === 'TWN' ? ' class="me"' : '') + '><td>' + r.rank + '</td><td>' +
+        (inames[r.CNT] || r.CNT) + '</td><td>' + fmt(r.mean) + '</td><td>' + fmt(r.se, 2) + '</td>' +
+        '<td>' + fmt(r.se_samp, 2) + '</td><td>' + fmt(r.se_imp, 2) + '</td><td>' + r.H + '</td>' +
+        '<td>' + r.n.toLocaleString('en-US') + '</td></tr>';
+    });
+  } else if (tbSel === 'pirls') {
     rows = arr(IEA.pirls_means).slice().sort((a,b) => a.rank - b.rank);
     const subs = arr(IEA.pirls_subnames);
     const sI = {}; arr(IEA.pirls_sub).forEach(r => { sI[r.CNT + '|' + r.scale] = r; });
@@ -1266,6 +1283,8 @@ function drawTmTable() {
     ['PISA', '重複橫斷', '15 歲學生', '10', 'Fay BRR（80 組重複權重）', 'lib_pisa.R'],
     ['TIMSS', '重複橫斷', '四／八年級', '5', 'JK2 折刀（JKZONE／JKREP）', 'lib_timss.R'],
     ['PIRLS', '重複橫斷', '四年級閱讀', '5', 'JK2 折刀（同 TIMSS）', 'lib_timss.R（共用）'],
+    ['ICCS', '重複橫斷', '八年級公民素養', '5', 'JK2 折刀（同 TIMSS）', 'lib_timss.R（共用）'],
+    ['TALIS', '重複橫斷', '教師與校長', '無', 'Fay BRR（100 組）', 'lib_talis.R'],
     ['TASA', '重複橫斷', '國中小各年級', '依年份', '依技術報告', '待資料到位'],
     ['TEPS／TEPS-B', '追蹤（panel）', '同一批學生多波', '多波測量', '追蹤樣本權重', '待資料到位']
   ];

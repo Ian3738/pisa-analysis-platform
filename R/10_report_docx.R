@@ -145,6 +145,8 @@ build_report <- function() {
   IEA   <- fromJSON(file.path(PISA_ROOT, "web", "iea_data.json"))
   T4M   <- as.data.table(IEA$timss4_means); T4B <- as.data.table(IEA$timss4_bench)
   PRM   <- as.data.table(IEA$pirls_means);  PRS <- as.data.table(IEA$pirls_sub)
+  ICM   <- as.data.table(IEA$iccs$means)
+  ICN2  <- setNames(as.data.table(IEA$iccs$names)$zh, as.data.table(IEA$iccs$names)$CNT)
   PSN   <- as.data.table(IEA$pirls_subnames); POS <- as.data.table(IEA$position)
   IEAN  <- setNames(as.data.table(IEA$names)$zh, as.data.table(IEA$names)$CNT)
   TMM   <- as.data.table(TIM$means); TBEN <- as.data.table(TIM$bench)
@@ -530,14 +532,16 @@ build_report <- function() {
     "本研究為此另行撰寫估計核心，並以獨立實作交叉驗證：臺灣八年級數學平均 602.430，標準誤 3.074（抽樣成分 2.758、推估成分 1.359，93 組重複權重），兩者逐位數一致。")
 
   t8 <- data.table(
-    資料庫 = c("PISA", "TIMSS", "TASA", "TEPS／TEPS-B"),
-    設計 = c("重複橫斷", "重複橫斷", "重複橫斷", "追蹤（panel）"),
-    對象 = c("15 歲學生", "四年級與八年級", "國中小各年級", "同一批學生多波"),
-    推估值 = c("10 個", "5 個", "依年份", "多波測量"),
-    變異數估計 = c("Fay BRR（80 組）", "JK2 折刀", "依技術報告", "追蹤樣本權重"),
-    取得方式 = c("官方直接下載", "官方直接下載", "需申請", "需申請"))
-  doc <- add_table(doc, 8, apa_table(t8), "四個大型教育資料庫的設計比較",
-    "TEPS 為其中唯一的追蹤設計，自 2001 年起追蹤同一批學生，因此也是唯一能進行個人成長軌跡、交叉延宕模型與個體固定效果分析的資料庫。PISA 與 TIMSS 皆為重複橫斷設計，每輪抽取不同學生，僅能進行群體層次的趨勢比較。")
+    資料庫 = c("PISA", "TIMSS", "PIRLS", "ICCS", "TALIS", "TASA", "TEPS／TEPS-B"),
+    設計 = c("重複橫斷","重複橫斷","重複橫斷","重複橫斷","重複橫斷","重複橫斷","追蹤（panel）"),
+    對象 = c("15 歲學生","四與八年級","四年級閱讀","八年級公民","教師與校長",
+             "國中小各年級","同一批學生多波"),
+    推估值 = c("10 個","5 個","5 個","5 個","無","依年份","多波測量"),
+    變異數估計 = c("Fay BRR（80 組）","JK2 折刀","JK2 折刀","JK2 折刀",
+                   "Fay BRR（100 組）","依技術報告","追蹤樣本權重"),
+    取得方式 = c("直接下載","直接下載","直接下載","需接受授權","直接下載","需申請","需申請"))
+  doc <- add_table(doc, 8, apa_table(t8), "七個大型教育資料庫的設計比較",
+    "TIMSS、PIRLS 與 ICCS 同屬 IEA 系列，設計一致故可共用估計核心；TALIS 為教師與校長調查，不測學生能力因而沒有合理推估值，其 Fay 係數為本研究自資料判定（重複權重與最終權重的比值集中於 0.5 與 1.5）。TEPS 為其中唯一的追蹤設計，自 2001 年起追蹤同一批學生，因此也是唯一能進行個人成長軌跡、交叉延宕模型與個體固定效果分析的資料庫。PISA 與 TIMSS 皆為重複橫斷設計，每輪抽取不同學生，僅能進行群體層次的趨勢比較。")
 
   doc <- add_h2(doc, "二、TIMSS 2023 八年級結果")
   twt <- TMM[CNT=="TWN"]
@@ -610,6 +614,20 @@ build_report <- function() {
     sprintf("各分測驗分數減去該國整體閱讀分數，正值代表相對強項。臺灣四年級學生在「%s」相對強（%+.1f 分），在「%s」相對弱（%+.1f 分）。此一形態與 PISA 創造思考的相對落後，可能指向同一個課程面向。",
       prsub$zh[1], prsub$rel[1], prsub$zh[nrow(prsub)], prsub$rel[nrow(prsub)])); fn <- fn + 1
 
+  doc <- add_h2(doc, "四、ICCS 2022 公民知識")
+  ictw <- ICM[CNT=="TWN"]
+  doc <- add_body(doc, sprintf(
+    "國際公民教育與素養調查（ICCS）由 IEA 主辦，測量八年級學生的公民與公民素養知識。2022 年共 %d 個參與者、%s 名學生，其抽樣與計分設計與 TIMSS 及 PIRLS 相同，可共用同一估計核心。",
+    IEA$iccs$meta$n_country, format(IEA$iccs$meta$n_student, big.mark=",")))
+  doc <- add_body(doc, sprintf(
+    "臺灣公民知識平均 %.1f 分（SE = %.2f），在 %d 個參與者中排名第 %d，領先第二名瑞典 %.1f 分。這是臺灣在本研究涵蓋的十項國際評比中相對位置最高的一項，與創造思考的第 %d 名形成強烈對比。",
+    ictw$mean, ictw$se, nrow(ICM), ictw$rank,
+    ictw$mean - ICM[rank==2]$mean, twc$rank))
+
+  doc <- add_figure(doc, fn, "iccs_rank", "ICCS 2022 公民知識：各參與者平均與 95% 信賴區間",
+    sprintf("臺灣 %.1f 分（SE = %.2f）居首。參與者中包含德國的兩個邦（什列斯威－霍爾斯坦、北萊茵－西發利亞），屬次國家層級的參與實體。折刀區數依各參與者的抽樣設計而異，介於 15 至 75 之間。",
+      ictw$mean, ictw$se)); fn <- fn + 1
+
   t10out <- data.table(
     評比 = POS$label, 名次 = POS$rank, 參與者數 = POS$total,
     `百分位 %` = sprintf("%.1f", POS$pct), 類別 = POS$kind)
@@ -656,7 +674,7 @@ build_report <- function() {
     gm("TAP","MATH","contextual"), gm("TAP","MATH","se_ctx")))
 
   doc <- add_body(doc, sprintf(
-    "第六，跨四套評比的相對位置呈現一致形態。臺灣在 TIMSS 四年級數學、TIMSS 八年級數學與科學、PISA 數學與科學各項均在 96 百分位以上，惟 PIRLS 四年級閱讀落在 %.1f 百分位、PISA 創造思考 %.1f 百分位。此一落差跨越不同年齡、不同主辦單位與不同測驗取向而穩定存在，難以歸因於單一評比的特性，指向課程與評量重心的結構性議題。",
+    "第六，跨五套評比十個項目的相對位置呈現一致形態。臺灣公民知識居 24 個參與者之首（百分位 100.0），數學與科學各項均在 96 百分位以上，惟 PIRLS 四年級閱讀落在 %.1f 百分位、PISA 創造思考 %.1f 百分位。此一落差跨越不同年齡、不同主辦單位與不同測驗取向而穩定存在，難以歸因於單一評比的特性，指向課程與評量重心的結構性議題：臺灣學生在有明確知識結構與標準答案的領域表現卓越，在開放性與詮釋性任務上的相對位置則明顯較低。",
     POS[label=="PIRLS 四年級閱讀"]$pct, POS[label=="PISA 創造思考"]$pct))
 
   doc <- add_h2(doc, "二、方法學上的提醒")
@@ -694,6 +712,7 @@ build_report <- function() {
     "von Davier, M., Kennedy, A., Reynolds, K., Fishbein, B., Khorramdel, L., Aldrich, C., Bookbinder, A., Bezirhan, U., & Yin, L. (2024). TIMSS 2023 technical report. TIMSS & PIRLS International Study Center, Boston College.",
     "Mundlak, Y. (1978). On the pooling of time series and cross section data. Econometrica, 46(1), 69-85.",
     "Mullis, I. V. S., von Davier, M., Foy, P., Fishbein, B., Reynolds, K. A., & Wry, E. (2023). PIRLS 2021 international results in reading. TIMSS & PIRLS International Study Center, Boston College.",
+    "Schulz, W., Ainley, J., Fraillon, J., Losito, B., Agrusti, G., Damiani, V., & Friedman, T. (2024). Education for citizenship in times of global challenge: IEA International Civic and Citizenship Education Study 2022 international report. IEA.",
     "Rubin, D. B. (1987). Multiple imputation for nonresponse in surveys. John Wiley & Sons.",
     "Judkins, D. R. (1990). Fay's method for variance estimation. Journal of Official Statistics, 6(3), 223–239.",
     "Wolter, K. M. (2007). Introduction to variance estimation (2nd ed.). Springer.")
