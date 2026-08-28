@@ -115,6 +115,42 @@ a { color:var(--accent); text-underline-offset:2px; }
 .ctx-v .n { font-family:var(--mono); font-variant-numeric:tabular-nums; }
 .ctx-v em { font-style:normal; color:var(--accent); font-weight:700; }
 
+/* ---------- 資料庫篩選 ---------- */
+.dsbar { background:var(--paper); border-bottom:1px solid var(--rule-soft); }
+.dsbar-in { display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding-block:11px; }
+.dsbar .lab { font-family:var(--mono); font-size:.64rem; letter-spacing:.14em;
+              text-transform:uppercase; color:var(--ink-3); margin-right:4px; }
+.ds-chip { appearance:none; cursor:pointer; font-family:var(--sans); font-size:.8rem;
+           background:transparent; color:var(--ink-2); border:1px solid var(--rule);
+           padding:4px 12px; display:inline-flex; align-items:center; gap:7px; }
+.ds-chip:hover { border-color:var(--accent-line); color:var(--ink); }
+.ds-chip[aria-pressed="true"] { background:var(--accent); border-color:var(--accent);
+                                color:var(--paper); font-weight:500; }
+.ds-chip .cnt { font-family:var(--mono); font-size:.68rem; opacity:.7; }
+.tab.hidden { display:none; }
+
+/* ---------- 入口卡片 ---------- */
+.dscards { display:grid; grid-template-columns:repeat(auto-fit, minmax(268px,1fr)); gap:1px;
+           background:var(--rule-soft); border:1px solid var(--rule-soft); margin-top:22px; }
+.dscard { background:var(--surface); padding:20px 20px 18px; display:flex; flex-direction:column;
+          gap:9px; text-align:left; border:0; cursor:pointer; font-family:var(--sans);
+          transition:background .15s; }
+.dscard:hover { background:var(--surface-2); }
+.dscard:disabled { cursor:default; opacity:.72; }
+.dscard .org { font-family:var(--mono); font-size:.62rem; letter-spacing:.14em;
+               text-transform:uppercase; color:var(--accent); }
+.dscard .nm { font-family:var(--serif); font-weight:700; font-size:1.12rem; color:var(--ink); }
+.dscard .sub { font-size:.79rem; color:var(--ink-3); }
+.dscard dl { display:grid; grid-template-columns:auto 1fr; gap:2px 12px; margin:4px 0 0;
+             font-size:.78rem; }
+.dscard dt { color:var(--ink-3); font-family:var(--mono); font-size:.68rem; }
+.dscard dd { margin:0; color:var(--ink-2); font-variant-numeric:tabular-nums; }
+.dscard .res { margin-top:6px; padding-top:9px; border-top:1px solid var(--rule-soft);
+               font-size:.82rem; color:var(--ink); }
+.dscard .res b { color:var(--accent); }
+.dscard .go { margin-top:auto; padding-top:10px; font-size:.78rem; color:var(--accent);
+              font-weight:500; }
+
 .panel { display:none; padding-block:36px 72px; }
 .panel.on { display:block; }
 .sec { border-top:1px solid var(--rule-soft); padding-top:26px; margin-top:38px; }
@@ -244,6 +280,13 @@ footer .fl { display:flex; flex-wrap:wrap; gap:6px 24px; }
   </div>
 </header>
 
+<div class="dsbar">
+  <div class="wrap dsbar-in">
+    <span class="lab">資料庫</span>
+    <div id="dsChips" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+  </div>
+</div>
+
 <nav class="tabs" aria-label="主要區段">
   <div class="wrap tabs-in" role="tablist" id="tablist"></div>
 </nav>
@@ -254,8 +297,28 @@ footer .fl { display:flex; flex-wrap:wrap; gap:6px 24px; }
 
 <main class="wrap">
 
+  <!-- ============ 入口 ============ -->
+  <section class="panel on" id="p-home" role="tabpanel" aria-labelledby="t-home">
+    <div class="sec">
+      <div class="eyebrow">從這裡開始</div>
+      <h2>五套國際大型評比，十個項目</h2>
+      <p class="lead">每一套評比的主辦單位、施測年齡與測驗取向都不同，把它們放在一起看，臺灣的輪廓才完整。上方的資料庫篩選可以只保留你要看的那一套。</p>
+      <figure style="margin-top:22px">
+        <div class="figbox"><!--FIG:taiwan_position--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 百分位換算</div>
+        <figcaption>各評比參與者數不同，故以百分位比較而非名次。臺灣公民知識居首，數學與科學各項在 96 百分位以上，但四年級閱讀落在 78.5、創造思考 76.2。這個落差跨越不同年齡、不同主辦單位與不同測驗取向而穩定存在。</figcaption>
+      </figure>
+    </div>
+
+    <div class="sec">
+      <h2>選擇資料庫</h2>
+      <p class="lead">點任一張卡片即可只保留該資料庫的分析分頁。</p>
+      <div class="dscards" id="dsCards"></div>
+    </div>
+  </section>
+
   <!-- ============ 總覽 ============ -->
-  <section class="panel on" id="p-overview" role="tabpanel" aria-labelledby="t-overview">
+  <section class="panel" id="p-overview" role="tabpanel" aria-labelledby="t-overview">
     <div class="sec">
       <div class="eyebrow">資料庫現況</div>
       <h2>三個輪次，一百七十四萬名學生</h2>
@@ -549,9 +612,9 @@ footer .fl { display:flex; flex-wrap:wrap; gap:6px 24px; }
   <!-- ============ TIMSS ============ -->
   <section class="panel" id="p-timss" role="tabpanel" aria-labelledby="t-timss">
     <div class="sec">
-      <div class="eyebrow">五套國際大型評比</div>
-      <h2>TIMSS、PIRLS、ICCS 與 PISA 的對照</h2>
-      <p class="lead">TIMSS、PIRLS 與 ICCS 由國際教育成就評鑑協會（IEA）主辦，測的是各國課程實際教過的內容與公民素養；PISA 由 OECD 主辦，測的是把知識用在真實情境的能力。它們評的不是同一件事，把十項結果放在一起看，臺灣的輪廓才完整。</p>
+      <div class="eyebrow">IEA · 國際數學與科學教育成就趨勢調查</div>
+      <h2>TIMSS 2023</h2>
+      <p class="lead">TIMSS 測的是各國課程實際教過的內容，四年級與八年級各抽一批獨立樣本。與 PISA 的差異不只在測什麼，抽樣與計分設計也不同：5 個合理推估值搭配 JK2 折刀法，直接套用 PISA 的程式會得到錯誤的標準誤。</p>
       <div class="tiles" id="timssTiles" style="margin-bottom:26px"></div>
       <div class="controls">
         <div class="ctl-group"><span class="ctl-label">領域</span>
@@ -561,68 +624,104 @@ footer .fl { display:flex; flex-wrap:wrap; gap:6px 24px; }
 
     <div class="stack">
       <figure>
-        <div class="figbox"><!--FIG:taiwan_position--></div>
-        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 百分位換算</div>
-        <figcaption>十項評比的參與者數不同，故以百分位比較而非名次。臺灣公民知識居首（百分位 100），數學與科學各項在 96 百分位以上，但四年級閱讀落在 78.5、創造思考 76.2。這個落差不是量測誤差，而是穩定出現在不同評比、不同年齡、不同主辦單位的一致形態。</figcaption>
-      </figure>
-
-      <figure>
-        <div class="figbox"><!--FIG:pisa_vs_timss--></div>
-        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 跨評比對照</div>
-        <figcaption>36 個同時參加兩項評比的經濟體，兩者相關 r = 0.948。量尺不同不可相減，此圖看的是相對位置。</figcaption>
-      </figure>
-
-      <figure>
         <div class="figbox figset" id="tmRankFigs"><!--FIGSET:timss_rank--></div>
         <div class="rcredit"><span class="dot"></span>R · ggplot2 · 5 個推估值 × JK2 折刀法</div>
-        <figcaption>虛線為四個國際基準點（400／475／550／625）。TIMSS 的變異數估計法與 PISA 不同，照抄 PISA 的程式會得到錯誤的標準誤。</figcaption>
+        <figcaption>八年級。虛線為四個國際基準點（400／475／550／625）。</figcaption>
       </figure>
 
       <figure>
         <div class="figbox figset" id="tmBenchFigs"><!--FIGSET:timss_bench--></div>
         <div class="rcredit"><span class="dot"></span>R · ggplot2 · 加權比率</div>
-        <figcaption>巢狀比率，達高階者必然也達其餘三標，故長條相互覆蓋而非堆疊。臺灣 44.4% 的學生達數學高階基準，僅次於新加坡的 46.3%。</figcaption>
+        <figcaption>巢狀比率，達高階者必然也達其餘三標，故長條相互覆蓋而非堆疊。臺灣 44.4% 的學生達八年級數學高階基準，僅次於新加坡的 46.3%。</figcaption>
       </figure>
 
       <figure>
         <div class="figbox figset" id="tm4Figs"><!--FIGSET:timss4_rank--></div>
         <div class="rcredit"><span class="dot"></span>R · ggplot2 · TIMSS 2023 四年級</div>
-        <figcaption>四年級數學臺灣 607.0 分排名第 2，科學 572.6 分排名第 3，99.7% 的學生達數學低標。須注意四年級與八年級為獨立樣本，不是同一批學生的追蹤，兩者之差不可解讀為成長。</figcaption>
-      </figure>
-
-      <figure>
-        <div class="figbox"><!--FIG:pirls_rank--></div>
-        <div class="rcredit"><span class="dot"></span>R · ggplot2 · PIRLS 2021 四年級閱讀</div>
-        <figcaption>臺灣 543.8 分排名第 15，是九項評比中相對位置最低者之一。部分參與者為次國家層級的標竿實體，如莫斯科市、加拿大各省、比利時語區。</figcaption>
-      </figure>
-
-      <figure>
-        <div class="figbox"><!--FIG:iccs_rank--></div>
-        <div class="rcredit"><span class="dot"></span>R · ggplot2 · ICCS 2022 公民知識</div>
-        <figcaption>臺灣 583.1 分居 24 個參與者之首，領先第 2 名瑞典 18.4 分。這是臺灣在十項國際評比中相對位置最高的一項，與創造思考的第 16 名形成強烈對比。參與者含德國兩個邦，屬次國家層級。</figcaption>
-      </figure>
-
-      <figure>
-        <div class="figbox"><!--FIG:pirls_subscale--></div>
-        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 閱讀分測驗相對強弱</div>
-        <figcaption>臺灣四年級學生在獲取資訊類文本相對強（+5.6 分），文學經驗類相對弱（−10.8 分）。這與 PISA 創造思考的落後可能指向同一個課程面向。</figcaption>
+        <figcaption>四年級數學臺灣 607.0 分排名第 2，科學 572.6 分排名第 3，99.7% 的學生達數學低標。四年級與八年級為獨立樣本，不是同一批學生的追蹤，兩者之差不可解讀為成長。</figcaption>
       </figure>
     </div>
 
     <div class="sec">
       <h2>各國數值</h2>
       <div class="controls">
-        <div class="ctl-group"><span class="ctl-label">評比</span>
-          <div class="seg" id="tbSel" role="group" aria-label="選擇評比"></div></div>
+        <div class="ctl-group"><span class="ctl-label">年級</span>
+          <div class="seg" id="tbSel" role="group" aria-label="選擇年級"></div></div>
       </div>
       <div class="tablewrap"><table id="timssTable"></table></div>
     </div>
+  </section>
+
+  <!-- ============ PIRLS ============ -->
+  <section class="panel" id="p-pirls" role="tabpanel" aria-labelledby="t-pirls">
+    <div class="sec">
+      <div class="eyebrow">IEA · 國際閱讀素養進展研究</div>
+      <h2>PIRLS 2021</h2>
+      <p class="lead">PIRLS 測四年級學生的閱讀素養，分為兩個閱讀目的（文學經驗、獲取資訊）與兩個理解歷程（提取與直接推論、詮釋整合評鑑）。這是臺灣在十項評比中相對位置最低者之一。</p>
+      <div class="tiles" id="pirlsTiles" style="margin-bottom:26px"></div>
+    </div>
+
+    <div class="stack">
+      <figure>
+        <div class="figbox"><!--FIG:pirls_rank--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 5 個推估值 × JK2 折刀法</div>
+        <figcaption>採數位施測的主樣本；紙筆檔為橋接研究，用於連結歷年趨勢，未納入本次估計。部分參與者為次國家層級的標竿實體，如莫斯科市、加拿大各省、比利時語區。</figcaption>
+      </figure>
+
+      <figure>
+        <div class="figbox"><!--FIG:pirls_subscale--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 閱讀分測驗相對強弱</div>
+        <figcaption>臺灣四年級學生在獲取資訊類文本相對強（+5.6 分），文學經驗類相對弱（−10.8 分）。這與 PISA 創造思考的落後可能指向同一個課程面向：有標準答案的任務表現好，需要詮釋的任務相對弱。</figcaption>
+      </figure>
+    </div>
 
     <div class="sec">
-      <div class="eyebrow">為什麼要另寫一套估計核心</div>
-      <h2>三個資料庫的設計差異</h2>
+      <h2>各參與者數值</h2>
+      <div class="tablewrap"><table id="pirlsTable"></table></div>
+    </div>
+  </section>
+
+  <!-- ============ ICCS ============ -->
+  <section class="panel" id="p-iccs" role="tabpanel" aria-labelledby="t-iccs">
+    <div class="sec">
+      <div class="eyebrow">IEA · 國際公民教育與素養調查</div>
+      <h2>ICCS 2022</h2>
+      <p class="lead">ICCS 測八年級學生的公民與公民素養知識。這是臺灣在十項國際評比中相對位置最高的一項，與創造思考的第 16 名形成強烈對比——同樣不是數理科目，結果卻南轅北轍。</p>
+      <div class="tiles" id="iccsTiles" style="margin-bottom:26px"></div>
+    </div>
+
+    <div class="stack">
+      <figure>
+        <div class="figbox"><!--FIG:iccs_rank--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 5 個推估值 × JK2 折刀法</div>
+        <figcaption>臺灣 583.1 分居 24 個參與者之首，領先第 2 名瑞典 18.4 分。參與者含德國兩個邦（什列斯威－霍爾斯坦、北萊茵－西發利亞），屬次國家層級。折刀區數依各參與者的抽樣設計而異，介於 15 至 75 之間。</figcaption>
+      </figure>
+    </div>
+
+    <div class="sec">
+      <h2>各參與者數值</h2>
+      <div class="tablewrap"><table id="iccsTable"></table></div>
+    </div>
+  </section>
+
+  <!-- ============ 跨評比對照 ============ -->
+  <section class="panel" id="p-cross" role="tabpanel" aria-labelledby="t-cross">
+    <div class="sec">
+      <div class="eyebrow">把五套放在一起</div>
+      <h2>跨評比對照</h2>
+      <p class="lead">不同主辦單位、不同施測年齡、不同測驗取向。單看一套評比得到的結論，換一套未必成立——所以要放在一起看。</p>
+      <figure>
+        <div class="figbox"><!--FIG:pisa_vs_timss--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 跨評比對照</div>
+        <figcaption>36 個同時參加兩項評比的經濟體，兩者相關 r = 0.948。量尺不同不可相減，此圖看的是相對位置。</figcaption>
+      </figure>
+    </div>
+
+    <div class="sec">
+      <div class="eyebrow">為什麼要寫多套估計核心</div>
+      <h2>各資料庫的設計差異</h2>
       <div class="tablewrap"><table id="designTable"></table></div>
-      <p class="note">把 PISA 的程式直接套到 TIMSS 上不會報錯，但會得到錯誤的標準誤——推估值個數與變異數估計法都不同。本平台為 TIMSS 另寫 <code>lib_timss.R</code>，並以 r-stats 的 <code>survey_mean</code> 獨立驗證：臺灣八年級數學 602.430（SE 3.074，抽樣 2.758、推估 1.359，93 組重複權重），兩者逐位數一致。</p>
+      <p class="note">把 PISA 的程式直接套到 TIMSS 上不會報錯，但會得到錯誤的標準誤——推估值個數與變異數估計法都不同。本平台為 IEA 系列另寫 <code>lib_timss.R</code>，為 TALIS 另寫 <code>lib_talis.R</code>，並各自以獨立實作驗證：TIMSS 臺灣八年級數學 602.430（SE 3.074），ICCS 臺灣 583.060（SE 2.303），兩者皆與 r-stats 的 <code>survey_mean</code> 逐位數一致。</p>
     </div>
 
     <div class="sec">
@@ -631,7 +730,7 @@ footer .fl { display:flex; flex-wrap:wrap; gap:6px 24px; }
       <div class="prose">
         <p>TASA（國家教育研究院臺灣學生學習成就評量資料庫）與 TEPS／TEPS-B（中央研究院）都需要申請取得，無法自動下載。本平台已寫好接入骨架，資料到位後把檔案放進指定目錄即可沿用同一套估計程序。</p>
         <p><strong>TASA</strong>　線上申請，需檢附研究計畫書與 IRB 核可文件。抽樣為分層叢集設計，提供學生權重與複本權重。</p>
-        <p><strong>TEPS／TEPS-B</strong>　向學術調查研究資料庫（SRDA）申請。這是四個資料庫中唯一的追蹤設計，自 2001 年起追蹤同一批學生——因此也是唯一能做個人成長軌跡、交叉延宕模型與個體固定效果的資料。PISA 與 TIMSS 皆為重複橫斷，每輪抽取不同學生，只能做群體層次的趨勢比較。</p>
+        <p><strong>TEPS／TEPS-B</strong>　向學術調查研究資料庫（SRDA）申請。這是所有資料庫中唯一的追蹤設計，自 2001 年起追蹤同一批學生——因此也是唯一能做個人成長軌跡、交叉延宕模型與個體固定效果的資料。其餘皆為重複橫斷，每輪抽取不同學生，只能做群體層次的趨勢比較。</p>
       </div>
     </div>
   </section>
@@ -869,16 +968,35 @@ function badge(sig) {
 
 /* 分頁 */
 const TABS = [
-  ['overview','總覽'],            ['desc','PISA 描述統計'],   ['trend','PISA 趨勢'],
-  ['link','PISA 連結誤差'],       ['country','PISA 各國比較'], ['equity','PISA 公平性'],
-  ['school','PISA 學校層級'],     ['extra','PISA 選考領域'],
-  ['timss','TIMSS · PIRLS · ICCS'], ['method','方法學'],      ['system','系統']];
+  ['home','入口','all'],              ['overview','PISA 總覽','pisa'],
+  ['desc','PISA 描述統計','pisa'],    ['trend','PISA 趨勢','pisa'],
+  ['link','PISA 連結誤差','pisa'],    ['country','PISA 各國比較','pisa'],
+  ['equity','PISA 公平性','pisa'],    ['school','PISA 學校層級','pisa'],
+  ['extra','PISA 選考領域','pisa'],   ['timss','TIMSS','timss'],
+  ['pirls','PIRLS','pirls'],          ['iccs','ICCS','iccs'],
+  ['cross','跨評比對照','cross'],     ['method','方法學','meta'],
+  ['system','系統','meta']];
+
+/* 資料庫篩選：值 → 顯示哪些分頁 */
+const DS_FILTER = {
+  all:   null,
+  pisa:  ['home','overview','desc','trend','link','country','equity','school','extra','cross','method','system'],
+  timss: ['home','timss','cross','method','system'],
+  pirls: ['home','pirls','cross','method','system'],
+  iccs:  ['home','iccs','cross','method','system'],
+  talis: ['home','cross','method','system']
+};
+const DS_LABEL = { all:'全部', pisa:'PISA', timss:'TIMSS', pirls:'PIRLS', iccs:'ICCS', talis:'TALIS' };
 
 /* 每個分頁的「用什麼資料、回答什麼問題、結論是什麼」 */
 const TAB_CTX = {
+  home: {
+    d: 'PISA · TIMSS · PIRLS · ICCS · TALIS，合計逾 <span class="n">283 萬</span>名學生',
+    q: '五套評比各測什麼？臺灣在每一套裡的位置？',
+    f: '公民知識 <em>第 1</em>、數理第 2–3，但四年級閱讀第 <em>15</em>、創造思考第 <em>16</em>'},
   overview: {
     d: 'PISA 2015／2018／2022　<span class="n">174.5 萬</span>名學生 · <span class="n">98</span> 個經濟體',
-    q: '這個平台涵蓋什麼？為什麼 PISA 的標準誤容易算錯？',
+    q: 'PISA 涵蓋什麼？為什麼它的標準誤容易算錯？',
     f: '在 <span class="n">396</span> 組跨輪次比較中，<em>16 組</em>忽略連結誤差就會把不顯著的差異判成顯著'},
   desc: {
     d: 'PISA 2022 全體 <span class="n">80</span> 國，加上臺灣三輪的分數與 ESCS 分布',
@@ -909,18 +1027,93 @@ const TAB_CTX = {
     q: '核心三領域之外，臺灣的樣貌是什麼？',
     f: '數學排第 3，<em>創造思考只排第 16</em>；八個數學分測驗只差 5.3 分，輪廓異常平坦'},
   timss: {
-    d: 'TIMSS 2023 四／八年級、PIRLS 2021 四年級閱讀、ICCS 2022 公民知識',
+    d: 'TIMSS 2023 四年級（<span class="n">63</span> 國）與八年級（<span class="n">47</span> 國），IEA 主辦',
+    q: '課程本位的評量，臺灣表現如何？',
+    f: '八年級數學 <em>602.4</em> 第 2、科學 571.8 第 2；四年級數學 607.0 第 <em>2</em>、科學第 3'},
+  pirls: {
+    d: 'PIRLS 2021 四年級閱讀，<span class="n">65</span> 個參與者、<span class="n">36.8 萬</span>名學生',
+    q: '四年級的閱讀素養，臺灣站在哪裡？',
+    f: '臺灣 543.8 分排第 <em>15</em>；獲取資訊 +5.6 分相對強，<em>文學經驗 −10.8 分相對弱</em>'},
+  iccs: {
+    d: 'ICCS 2022 八年級公民知識，<span class="n">24</span> 個參與者、<span class="n">8.2 萬</span>名學生',
+    q: '公民與公民素養知識，臺灣的位置？',
+    f: '臺灣 583.1 分<em>居首</em>，領先第 2 名瑞典 18.4 分——十項評比中相對位置最高'},
+  cross: {
+    d: '五套評比十個項目的對照，以及各資料庫的設計差異',
     q: '換一套主辦單位、換一種測驗取向，結論會一樣嗎？',
-    f: '公民知識 <em>第 1</em>、數理第 2–3，但四年級閱讀第 <em>15</em>、創造思考第 <em>16</em>'},
+    f: '有標準答案的領域表現卓越，<em>開放性與詮釋性任務相對位置明顯較低</em>'},
   method: {
     d: '方法說明（不含資料分析）',
-    q: '這些估計是怎麼算的？哪些分析 PISA 根本做不到？',
-    f: 'PISA 是重複橫斷設計，<em>不能做個人層次的縱貫分析</em>'},
+    q: '這些估計是怎麼算的？哪些分析根本做不到？',
+    f: 'PISA、TIMSS、PIRLS、ICCS 皆為重複橫斷設計，<em>不能做個人層次的縱貫分析</em>'},
   system: {
     d: '系統說明（不含資料分析）',
     q: '整套流程怎麼跑？要加新的資料庫該改哪裡？',
-    f: '五套評比、<em>兩套估計核心</em>：Fay BRR 與 JK2 折刀不可混用'}
+    f: '五套評比、<em>三套估計核心</em>：Fay BRR 80 組、JK2 折刀、Fay BRR 100 組，不可混用'}
 };
+
+/* 入口頁的資料庫卡片 */
+const DATASETS = [
+  {ds:'pisa',  org:'OECD', nm:'PISA 2015–2022', sub:'國際學生能力評量計畫 · 15 歲學生',
+   rows:[['學生','174.5 萬名'],['參與','98 個經濟體'],['分析','7 個分頁']],
+   res:'臺灣數學第 <b>3</b>、科學第 <b>4</b>、閱讀第 <b>5</b>；創造思考第 <b>16</b>'},
+  {ds:'timss', org:'IEA', nm:'TIMSS 2023', sub:'數學與科學教育成就趨勢調查 · 四／八年級',
+   rows:[['學生','72.0 萬名'],['參與','63／47 個'],['分析','1 個分頁']],
+   res:'臺灣八年級數學第 <b>2</b>、科學第 <b>2</b>；四年級數學第 <b>2</b>'},
+  {ds:'pirls', org:'IEA', nm:'PIRLS 2021', sub:'國際閱讀素養進展研究 · 四年級',
+   rows:[['學生','36.8 萬名'],['參與','65 個'],['分析','1 個分頁']],
+   res:'臺灣第 <b>15</b> 名——十項評比中相對位置最低者之一'},
+  {ds:'iccs',  org:'IEA', nm:'ICCS 2022', sub:'國際公民教育與素養調查 · 八年級',
+   rows:[['學生','8.2 萬名'],['參與','24 個'],['分析','1 個分頁']],
+   res:'臺灣<b>第 1 名</b>，領先第 2 名瑞典 18.4 分'},
+  {ds:'talis', org:'OECD', nm:'TALIS 2024', sub:'教學與學習國際調查 · 教師與校長',
+   rows:[['校長','1.16 萬名'],['參與','55 國'],['分析','建置中']],
+   res:'<b>臺灣未參加此輪</b>；日本校長工作滿意度為全體最低',
+   disabled:true}
+];
+
+let curDS = 'all';
+function tabVisible(ds) { const f = DS_FILTER[curDS]; return !f || f.indexOf(ds) >= 0; }
+function applyDS(v, jump) {
+  curDS = v;
+  $$('.ds-chip').forEach(c => c.setAttribute('aria-pressed', String(c.dataset.ds === v)));
+  let firstVisible = null;
+  TABS.forEach(([id, , ds]) => {
+    const t = $('#t-' + id), vis = tabVisible(ds);
+    t.classList.toggle('hidden', !vis);
+    if (vis && !firstVisible) firstVisible = id;
+  });
+  const cur = $$('.tab').find(t => t.getAttribute('aria-selected') === 'true');
+  if (jump) { $('#t-' + jump).click(); }
+  else if (cur && cur.classList.contains('hidden')) { $('#t-' + firstVisible).click(); }
+}
+
+function drawDsBar() {
+  $('#dsChips').innerHTML = Object.keys(DS_LABEL).map(k => {
+    const f = DS_FILTER[k];
+    const n = f ? f.filter(id => !['home','method','system','cross'].includes(id)).length : TABS.length - 4;
+    return '<button class="ds-chip" type="button" data-ds="' + k + '" aria-pressed="' +
+      (k === curDS) + '">' + DS_LABEL[k] +
+      '<span class="cnt">' + n + '</span></button>';
+  }).join('');
+  $$('.ds-chip').forEach(c => c.addEventListener('click', () => applyDS(c.dataset.ds)));
+}
+
+function drawCards() {
+  $('#dsCards').innerHTML = DATASETS.map(d =>
+    '<button class="dscard" type="button" data-ds="' + d.ds + '"' + (d.disabled ? ' disabled' : '') + '>' +
+    '<div class="org">' + d.org + '</div><div class="nm">' + d.nm + '</div>' +
+    '<div class="sub">' + d.sub + '</div>' +
+    '<dl>' + d.rows.map(r => '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>').join('') + '</dl>' +
+    '<div class="res">' + d.res + '</div>' +
+    '<div class="go">' + (d.disabled ? '資料處理中' : '只看這一套 →') + '</div></button>').join('');
+  $$('.dscard').forEach(c => c.addEventListener('click', () => {
+    if (c.disabled) return;
+    const ds = c.dataset.ds;
+    const first = DS_FILTER[ds].find(id => !['home','cross','method','system'].includes(id));
+    applyDS(ds, first);
+  }));
+}
 
 function drawCtx(id) {
   const c = TAB_CTX[id];
@@ -932,11 +1125,12 @@ function drawCtx(id) {
 }
 (function () {
   const host = $('#tablist');
-  TABS.forEach(([id, label], i) => {
+  TABS.forEach(([id, label, ds], i) => {
     const b = document.createElement('button');
     b.className = 'tab'; b.id = 't-' + id; b.type = 'button';
     b.setAttribute('role', 'tab');
-    b.setAttribute('aria-selected', String(i === 0));
+    b.setAttribute('aria-selected', String(id === 'home'));
+    b.dataset.ds = ds;
     b.setAttribute('aria-controls', 'p-' + id);
     b.innerHTML = '<span class="num">' + String(i + 1).padStart(2, '0') + '</span>' + label;
     b.addEventListener('click', () => {
@@ -949,7 +1143,7 @@ function drawCtx(id) {
     });
     host.appendChild(b);
   });
-  drawCtx('overview');
+  drawDsBar(); drawCards(); drawCtx('home');
 })();
 
 /* 總覽 */
@@ -1269,113 +1463,132 @@ function drawSch() {
   $('#extraTable').innerHTML = h + '</tbody>';
 })();
 
-/* TIMSS */
-let tmDomain = 'MATH';
+/* TIMSS / PIRLS / ICCS */
+let tmDomain = 'MATH', tbSel = 'g8';
 const TNM = {}; arr(TIMSS.names).forEach(r => { TNM[r.CNT] = r.zh; });
-const tnm = c => TNM[c] || c;
+const IEAN = {}; arr(IEA.names).forEach(r => { IEAN[r.CNT] = r.zh; });
+const ICN = {}; arr(IEA.iccs.names).forEach(r => { ICN[r.CNT] = r.zh; });
+const inm = c => IEAN[c] || TNM[c] || ICN[c] || c;
+const BN = ['Low','Intermediate','High','Advanced'];
+const BL = {Low:'低標 400+', Intermediate:'中標 475+', High:'高標 550+', Advanced:'高階 625+'};
+
 function initTm() {
   seg($('#tmDomain'), [{value:'MATH',label:'數學'},{value:'SCIE',label:'科學'}],
     tmDomain, v => { tmDomain = v; initTm(); drawTm(); });
+  seg($('#tbSel'), [{value:'g8',label:'八年級'},{value:'g4',label:'四年級'}],
+    tbSel, v => { tbSel = v; initTm(); drawTmTable(); });
 }
 function drawTm() {
   const d = tmDomain.toLowerCase();
   showFig('tmRankFigs', 'timss_rank_' + d);
   showFig('tmBenchFigs', 'timss_bench_' + d);
   showFig('tm4Figs', 'timss4_rank_' + d);
-  const rows = arr(TIMSS.means).filter(r => r.domain === tmDomain).sort((a,b) => a.rank - b.rank);
-  const tw = rows.find(r => r.CNT === 'TWN');
+  const g8 = arr(TIMSS.means).find(r => r.CNT === 'TWN' && r.domain === tmDomain);
+  const g4 = arr(IEA.timss4_means).find(r => r.CNT === 'TWN' && r.domain === tmDomain);
   const adv = arr(TIMSS.bench).find(r => r.CNT === 'TWN' && r.domain === tmDomain && r.bench === 'Advanced');
   $('#timssTiles').innerHTML = [
-    ['臺灣分數', tw ? fmt(tw.mean) : '—', tw ? '第 ' + tw.rank + ' 名／共 ' + TIMSS.meta.n_country : ''],
-    ['達高階基準', adv ? fmt(adv.pct) + '%' : '—', '625 分以上'],
-    ['參與經濟體', TIMSS.meta.n_country, '八年級'],
-    ['學生數', TIMSS.meta.n_student.toLocaleString('en-US'), '未加權'],
+    ['臺灣 八年級', g8 ? fmt(g8.mean) : '—', g8 ? '第 ' + g8.rank + ' 名／共 ' + TIMSS.meta.n_country : ''],
+    ['臺灣 四年級', g4 ? fmt(g4.mean) : '—', g4 ? '第 ' + g4.rank + ' 名／共 ' + IEA.meta.timss_g4.n_country : ''],
+    ['達高階基準', adv ? fmt(adv.pct) + '%' : '—', '八年級 625 分以上'],
+    ['學生數', (IEA.meta.timss_g4.n_student + TIMSS.meta.n_student).toLocaleString('en-US'), '四與八年級合計'],
     ['推估值 × 折刀', '5 × JK2', 'PISA 為 10 × Fay BRR']
   ].map(t => '<div class="tile"><div class="k">' + t[0] + '</div><div class="v">' + t[1] +
     '</div><div class="n">' + t[2] + '</div></div>').join('');
-
   drawTmTable();
 }
-
-let tbSel = 'g8';
-const IEAN = {}; arr(IEA.names).forEach(r => { IEAN[r.CNT] = r.zh; });
-const inm = c => IEAN[c] || TNM[c] || c;
-function initTb() {
-  seg($('#tbSel'), [{value:'g8',label:'TIMSS 八年級'},{value:'g4',label:'TIMSS 四年級'},
-                    {value:'pirls',label:'PIRLS 閱讀'},{value:'iccs',label:'ICCS 公民'}],
-    tbSel, v => { tbSel = v; initTb(); drawTmTable(); });
-}
 function drawTmTable() {
-  const BN = ['Low','Intermediate','High','Advanced'];
-  const BL = {Low:'低標 400+', Intermediate:'中標 475+', High:'高標 550+', Advanced:'高階 625+'};
-  let h = '', rows, bIdx = {};
-  if (tbSel === 'iccs') {
-    const inames = {}; arr(IEA.iccs.names).forEach(r => { inames[r.CNT] = r.zh; });
-    rows = arr(IEA.iccs.means).slice().sort((a,b) => a.rank - b.rank);
-    h = '<thead><tr><th>#</th><th>參與者</th><th>公民知識</th><th>SE</th>' +
-        '<th>抽樣 SE</th><th>推估 SE</th><th>折刀區</th><th>樣本數</th></tr></thead><tbody>';
-    rows.forEach(r => {
-      h += '<tr' + (r.CNT === 'TWN' ? ' class="me"' : '') + '><td>' + r.rank + '</td><td>' +
-        (inames[r.CNT] || r.CNT) + '</td><td>' + fmt(r.mean) + '</td><td>' + fmt(r.se, 2) + '</td>' +
-        '<td>' + fmt(r.se_samp, 2) + '</td><td>' + fmt(r.se_imp, 2) + '</td><td>' + r.H + '</td>' +
-        '<td>' + r.n.toLocaleString('en-US') + '</td></tr>';
+  const isG4 = tbSel === 'g4';
+  const rows = (isG4 ? arr(IEA.timss4_means) : arr(TIMSS.means))
+    .filter(r => r.domain === tmDomain).slice().sort((a,b) => a.rank - b.rank);
+  const bIdx = {};
+  (isG4 ? arr(IEA.timss4_bench) : arr(TIMSS.bench))
+    .forEach(r => { bIdx[r.CNT + '|' + r.domain + '|' + r.bench] = r; });
+  let h = '<thead><tr><th>#</th><th>國家／經濟體</th><th>平均</th><th>SE</th>';
+  BN.forEach(b => { h += '<th>' + BL[b] + '</th>'; });
+  h += '<th>樣本數</th></tr></thead><tbody>';
+  rows.forEach(r => {
+    h += '<tr' + (r.CNT === 'TWN' ? ' class="me"' : '') + '><td>' + r.rank + '</td><td>' +
+      inm(r.CNT) + '</td><td>' + fmt(r.mean) + '</td><td>' + fmt(r.se, 2) + '</td>';
+    BN.forEach(b => {
+      const x = bIdx[r.CNT + '|' + r.domain + '|' + b];
+      h += '<td>' + (x ? fmt(x.pct) : '—') + '</td>';
     });
-  } else if (tbSel === 'pirls') {
-    rows = arr(IEA.pirls_means).slice().sort((a,b) => a.rank - b.rank);
-    const subs = arr(IEA.pirls_subnames);
-    const sI = {}; arr(IEA.pirls_sub).forEach(r => { sI[r.CNT + '|' + r.scale] = r; });
-    h = '<thead><tr><th>#</th><th>國家／經濟體</th><th>閱讀</th><th>SE</th>';
-    subs.forEach(x => { h += '<th>' + x.zh + '</th>'; });
-    h += '<th>樣本數</th></tr></thead><tbody>';
-    rows.forEach(r => {
-      h += '<tr' + (r.CNT === 'TWN' ? ' class="me"' : '') + '><td>' + r.rank + '</td><td>' +
-        inm(r.CNT) + '</td><td>' + fmt(r.mean) + '</td><td>' + fmt(r.se, 2) + '</td>';
-      subs.forEach(x => {
-        const v = sI[r.CNT + '|' + x.code];
-        h += '<td>' + (v ? (v.rel > 0 ? '+' : '') + fmt(v.rel) : '—') + '</td>';
-      });
-      h += '<td>' + r.n.toLocaleString('en-US') + '</td></tr>';
-    });
-  } else {
-    const isG4 = tbSel === 'g4';
-    rows = (isG4 ? arr(IEA.timss4_means) : arr(TIMSS.means))
-      .filter(r => r.domain === tmDomain).slice().sort((a,b) => a.rank - b.rank);
-    (isG4 ? arr(IEA.timss4_bench) : arr(TIMSS.bench))
-      .forEach(r => { bIdx[r.CNT + '|' + r.domain + '|' + r.bench] = r; });
-    h = '<thead><tr><th>#</th><th>國家／經濟體</th><th>平均</th><th>SE</th>';
-    BN.forEach(b => { h += '<th>' + BL[b] + '</th>'; });
-    h += '<th>樣本數</th></tr></thead><tbody>';
-    rows.forEach(r => {
-      h += '<tr' + (r.CNT === 'TWN' ? ' class="me"' : '') + '><td>' + r.rank + '</td><td>' +
-        inm(r.CNT) + '</td><td>' + fmt(r.mean) + '</td><td>' + fmt(r.se, 2) + '</td>';
-      BN.forEach(b => {
-        const x = bIdx[r.CNT + '|' + r.domain + '|' + b];
-        h += '<td>' + (x ? fmt(x.pct) : '—') + '</td>';
-      });
-      h += '<td>' + r.n.toLocaleString('en-US') + '</td></tr>';
-    });
-  }
+    h += '<td>' + r.n.toLocaleString('en-US') + '</td></tr>';
+  });
   $('#timssTable').innerHTML = h + '</tbody>';
 }
+
+function drawPirls() {
+  const rows = arr(IEA.pirls_means).slice().sort((a,b) => a.rank - b.rank);
+  const tw = rows.find(r => r.CNT === 'TWN');
+  const subs = arr(IEA.pirls_subnames);
+  const sI = {}; arr(IEA.pirls_sub).forEach(r => { sI[r.CNT + '|' + r.scale] = r; });
+  const twSub = subs.map(x => sI['TWN|' + x.code]).filter(Boolean).sort((a,b) => b.rel - a.rel);
+  $('#pirlsTiles').innerHTML = [
+    ['臺灣分數', tw ? fmt(tw.mean) : '—', tw ? '第 ' + tw.rank + ' 名／共 ' + rows.length : ''],
+    ['相對強項', twSub.length ? '+' + fmt(twSub[0].rel) : '—',
+     twSub.length ? (subs.find(x => x.code === twSub[0].scale) || {}).zh : ''],
+    ['相對弱項', twSub.length ? fmt(twSub[twSub.length-1].rel) : '—',
+     twSub.length ? (subs.find(x => x.code === twSub[twSub.length-1].scale) || {}).zh : ''],
+    ['參與者', rows.length, '四年級'],
+    ['學生數', IEA.meta.pirls.n_student.toLocaleString('en-US'), '未加權']
+  ].map(t => '<div class="tile"><div class="k">' + t[0] + '</div><div class="v">' + t[1] +
+    '</div><div class="n">' + t[2] + '</div></div>').join('');
+
+  let h = '<thead><tr><th>#</th><th>參與者</th><th>閱讀</th><th>SE</th>';
+  subs.forEach(x => { h += '<th>' + x.zh + '</th>'; });
+  h += '<th>樣本數</th></tr></thead><tbody>';
+  rows.forEach(r => {
+    h += '<tr' + (r.CNT === 'TWN' ? ' class="me"' : '') + '><td>' + r.rank + '</td><td>' +
+      inm(r.CNT) + '</td><td>' + fmt(r.mean) + '</td><td>' + fmt(r.se, 2) + '</td>';
+    subs.forEach(x => {
+      const v = sI[r.CNT + '|' + x.code];
+      h += '<td>' + (v ? (v.rel > 0 ? '+' : '') + fmt(v.rel) : '—') + '</td>';
+    });
+    h += '<td>' + r.n.toLocaleString('en-US') + '</td></tr>';
+  });
+  $('#pirlsTable').innerHTML = h + '</tbody>';
+}
+
+function drawIccs() {
+  const rows = arr(IEA.iccs.means).slice().sort((a,b) => a.rank - b.rank);
+  const tw = rows.find(r => r.CNT === 'TWN');
+  $('#iccsTiles').innerHTML = [
+    ['臺灣分數', tw ? fmt(tw.mean) : '—', tw ? '第 ' + tw.rank + ' 名／共 ' + rows.length : ''],
+    ['領先幅度', tw && rows[1] ? '+' + fmt(tw.mean - rows[1].mean) : '—', '與第 2 名之差'],
+    ['參與者', rows.length, '八年級'],
+    ['學生數', IEA.iccs.meta.n_student.toLocaleString('en-US'), '未加權'],
+    ['推估值 × 折刀', '5 × JK2', '與 TIMSS、PIRLS 相同']
+  ].map(t => '<div class="tile"><div class="k">' + t[0] + '</div><div class="v">' + t[1] +
+    '</div><div class="n">' + t[2] + '</div></div>').join('');
+  let h = '<thead><tr><th>#</th><th>參與者</th><th>公民知識</th><th>SE</th>' +
+          '<th>抽樣 SE</th><th>推估 SE</th><th>折刀區</th><th>樣本數</th></tr></thead><tbody>';
+  rows.forEach(r => {
+    h += '<tr' + (r.CNT === 'TWN' ? ' class="me"' : '') + '><td>' + r.rank + '</td><td>' +
+      inm(r.CNT) + '</td><td>' + fmt(r.mean) + '</td><td>' + fmt(r.se, 2) + '</td>' +
+      '<td>' + fmt(r.se_samp, 2) + '</td><td>' + fmt(r.se_imp, 2) + '</td><td>' + r.H + '</td>' +
+      '<td>' + r.n.toLocaleString('en-US') + '</td></tr>';
+  });
+  $('#iccsTable').innerHTML = h + '</tbody>';
+}
+
 (function designTable() {
   const rows = [
-    ['PISA', '重複橫斷', '15 歲學生', '10', 'Fay BRR（80 組重複權重）', 'lib_pisa.R'],
+    ['PISA', '重複橫斷', '15 歲學生', '10', 'Fay BRR（80 組）', 'lib_pisa.R'],
     ['TIMSS', '重複橫斷', '四／八年級', '5', 'JK2 折刀（JKZONE／JKREP）', 'lib_timss.R'],
     ['PIRLS', '重複橫斷', '四年級閱讀', '5', 'JK2 折刀（同 TIMSS）', 'lib_timss.R（共用）'],
-    ['ICCS', '重複橫斷', '八年級公民素養', '5', 'JK2 折刀（同 TIMSS）', 'lib_timss.R（共用）'],
+    ['ICCS', '重複橫斷', '八年級公民', '5', 'JK2 折刀（同 TIMSS）', 'lib_timss.R（共用）'],
     ['TALIS', '重複橫斷', '教師與校長', '無', 'Fay BRR（100 組）', 'lib_talis.R'],
     ['TASA', '重複橫斷', '國中小各年級', '依年份', '依技術報告', '待資料到位'],
     ['TEPS／TEPS-B', '追蹤（panel）', '同一批學生多波', '多波測量', '追蹤樣本權重', '待資料到位']
   ];
   let h = '<thead><tr><th>資料庫</th><th>設計</th><th>對象</th><th>推估值</th>' +
           '<th>變異數估計</th><th>估計核心</th></tr></thead><tbody>';
-  rows.forEach(r => {
-    h += '<tr><td>' + r[0] + '</td>' + r.slice(1).map(x => '<td>' + x + '</td>').join('') + '</tr>';
-  });
+  rows.forEach(r => { h += '<tr><td>' + r[0] + '</td>' + r.slice(1).map(x => '<td>' + x + '</td>').join('') + '</tr>'; });
   $('#designTable').innerHTML = h + '</tbody>';
 })();
 
-initTr(); initLE(); drawLE(); initCty(); drawCty(); initEq(); drawEq(); initSch(); drawSch(); initTm(); initTb(); drawTm();
+initTr(); initLE(); drawLE(); initCty(); drawCty(); initEq(); drawEq(); initSch(); drawSch(); initTm(); drawTm(); drawPirls(); drawIccs();
 
 /*__DL_JS__*/
 </script>
