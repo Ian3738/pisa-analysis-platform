@@ -182,17 +182,20 @@ build_report <- function() {
   doc <- body_add_fpar(doc, fpar(ftext("", tx(12)), fp_p = P_CENTER))
   doc <- body_add_fpar(doc, fpar(ftext("", tx(12)), fp_p = P_CENTER))
   doc <- body_add_fpar(doc, fpar(
-    ftext("PISA 2015–2022 國際學生能力評量結果分析", tx(16, bold = TRUE)), fp_p = P_CENTER))
+    ftext("大型數據分析平台：國際大型評比結果分析", tx(16, bold = TRUE)), fp_p = P_CENTER))
   doc <- body_add_fpar(doc, fpar(
-    ftext("加權估計、精熟等級分布與跨輪次趨勢", tx(13)), fp_p = P_CENTER))
+    ftext("PISA、TIMSS、PIRLS 與 ICCS 的加權估計、學校層級分解與跨評比對照", tx(12)), fp_p = P_CENTER))
   doc <- add_gap(doc)
   doc <- body_add_fpar(doc, fpar(ftext(
-    sprintf("分析樣本：%s 名學生，%d 個國家與經濟體",
-            format(J$meta$nStudents, big.mark = ","), J$meta$nCountries), tx(12)),
+    sprintf("分析樣本：PISA %s 名、TIMSS %s 名、PIRLS %s 名、ICCS %s 名學生",
+            format(J$meta$nStudents, big.mark = ","),
+            format(TIM$meta$n_student + IEA$meta$timss_g4$n_student, big.mark = ","),
+            format(IEA$meta$pirls$n_student, big.mark = ","),
+            format(IEA$iccs$meta$n_student, big.mark = ",")), tx(11)),
     fp_p = P_CENTER))
   doc <- body_add_fpar(doc, fpar(ftext(
-    paste0("資料來源：OECD PISA 公開使用檔（", paste(J$meta$cycles, collapse = "、"), "）"),
-    tx(12)), fp_p = P_CENTER))
+    "資料來源：OECD PISA 公開使用檔、IEA TIMSS／PIRLS／ICCS 國際資料庫",
+    tx(11)), fp_p = P_CENTER))
   doc <- body_add_fpar(doc, fpar(ftext(
     paste0("報告產生日期：", format(Sys.Date(), "%Y 年 %m 月 %d 日")), tx(12)), fp_p = P_CENTER))
   doc <- body_add_break(doc)
