@@ -71,14 +71,24 @@ def dl_markup_artifact(n):
             f'<div class="dl-msg" id="dlMsg{n}" role="status" aria-live="polite"></div>')
 
 
-def dl_markup_link(n, size_mb, href, meta_extra=""):
+def count_report(docx):
+    """自報告本身數出圖表數，避免手寫數字與檔案脫節。"""
+    import zipfile
+    x = zipfile.ZipFile(docx).read("word/document.xml").decode()
+    t = re.sub(r"<[^>]+>", "", x)
+    figs = {int(m) for m in re.findall(r"圖 (\d+)", t)}
+    tabs = {int(m) for m in re.findall(r"表 (\d+)", t)}
+    return len(figs), len(tabs)
+
+
+def dl_markup_link(n, size_mb, href, n_fig, n_tab, meta_extra=""):
     pad = ' style="margin-top:18px"' if n == 2 else ""
     tgt = ' target="_blank" rel="noopener"' if href.startswith("http") else ""
     dl  = f' download="{DOCX_ZH}"' if not href.startswith("http") else ""
     return (f'<div class="dl"{pad}>'
             f'<a class="dl-btn" href="{href}"{dl}{tgt}>'
             f'<span class="ic">↓</span>下載完整報告（Word）</a>'
-            f'<span class="dl-meta">{size_mb:.1f} MB · 43 圖 · 9 表 · APA 7{meta_extra}</span></div>')
+            f'<span class="dl-meta">{size_mb:.1f} MB · {n_fig} 圖 · {n_tab} 表 · APA 7{meta_extra}</span></div>')
 
 
 DL_JS_ARTIFACT_LINK = """
@@ -106,20 +116,22 @@ def build(target):
     if not docx.exists():
         raise SystemExit(f"缺少 {docx}；請先執行 10_report_docx.R")
     size_mb = docx.stat().st_size / 2**20
+    n_fig, n_tab = count_report(docx)
 
     if target == "artifact":
         href = PAGES_URL + DOCX_ASCII
         for n in (1, 2):
             html = html.replace(f"<!--DLBLOCK:{n}-->",
-                                dl_markup_link(n, size_mb, href, " · 於新分頁開啟"))
+                                dl_markup_link(n, size_mb, href, n_fig, n_tab, " · 於新分頁開啟"))
         html = html.replace("/*__DL_JS__*/", DL_JS_ARTIFACT_LINK)
-        print(f"  DOCX   以絕對網址提供（{size_mb:.2f} MB，指向 GitHub Pages）")
+        print(f"  DOCX   以絕對網址提供（{size_mb:.2f} MB，{n_fig} 圖 {n_tab} 表）")
         out = ROOT / "pisa-platform.html"
     else:
         for n in (1, 2):
-            html = html.replace(f"<!--DLBLOCK:{n}-->", dl_markup_link(n, size_mb, DOCX_ASCII))
+            html = html.replace(f"<!--DLBLOCK:{n}-->",
+                                dl_markup_link(n, size_mb, DOCX_ASCII, n_fig, n_tab))
         html = html.replace("/*__DL_JS__*/", DL_JS_PAGES)
-        print(f"  DOCX   以相對連結提供（{size_mb:.2f} MB，須與網頁並存）")
+        print(f"  DOCX   以相對連結提供（{size_mb:.2f} MB，{n_fig} 圖 {n_tab} 表）")
         out = ROOT / "index-pages.html"
 
     html = re.sub(r"/\*__PISA_DATA__\*/.*?/\*__END__\*/",
