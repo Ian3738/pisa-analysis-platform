@@ -15,7 +15,7 @@ web/report_b64.txt
 web/pisa-platform.html
 # Pages 版建置輸出；發布副本在 docs/index.html
 web/index-pages.html
-# 發布副本在 docs/PISA-analysis-report-APA7.docx
+# 發布副本在 docs/large-scale-data-analysis-report-APA7.docx
 output/*.docx
 
 # ---- R / macOS ----
