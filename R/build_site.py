@@ -18,9 +18,9 @@ FIGS = ROOT / "figs"
 
 FONT_STACK = '"Noto Sans TC", "PingFang TC", "Microsoft JhengHei", "Heiti TC", sans-serif'
 
-DOCX_ASCII = "PISA-analysis-report-APA7.docx"   # 網址用 ASCII 檔名，避免編碼問題
+DOCX_ASCII = "large-scale-data-analysis-report-APA7.docx"   # 網址用 ASCII 檔名，避免編碼問題
 PAGES_URL  = "https://ian3738.github.io/pisa-analysis-platform/"
-DOCX_ZH    = "PISA分析報告_APA7.docx"           # download 屬性指定另存時的中文檔名
+DOCX_ZH    = "大型數據分析報告_APA7.docx"           # download 屬性指定另存時的中文檔名
 
 
 def load_svg(name, mode):

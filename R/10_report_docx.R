@@ -14,7 +14,7 @@ suppressPackageStartupMessages({
 })
 
 PNGDIR   <- file.path(PISA_ROOT, "web", "png")
-DOCX_OUT <- file.path(PISA_ROOT, "output", "PISA分析報告_APA7.docx")
+DOCX_OUT <- file.path(PISA_ROOT, "output", "大型數據分析報告_APA7.docx")
 
 CJK   <- "BiauKaiTC"          # 標楷體
 LATIN <- "Times New Roman"

@@ -76,7 +76,7 @@ PISA 資料有兩個地方容易做錯，而且錯了不會報錯：
 │   └── lib_pisa.R            估計核心（三方驗證）
 ├── docs/                     GitHub Pages 來源目錄
 │   ├── index.html            分析平台網站
-│   ├── PISA-analysis-report-APA7.docx
+│   ├── large-scale-data-analysis-report-APA7.docx
 │   ├── methodology.md        方法學：縱貫分析的限制、複雜抽樣、連結誤差
 │   └── architecture.md       系統架構與擴充方式
 ├── web/
