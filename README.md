@@ -74,7 +74,19 @@ PISA 資料有兩個地方容易做錯，而且錯了不會報錯：
 │   ├── 09_figures.R          產出全部圖表（SVG + PNG）
 │   ├── 10_report_docx.R      產出 APA 第七版 Word 報告
 │   ├── build_site.py         組裝網站
-│   └── lib_pisa.R            估計核心（三方驗證）
+│   ├── 11_figures_q.R        問卷分析的圖表
+│   ├── 12_export_q.R         問卷分析結果輸出成 JSON
+│   ├── lib_pisa.R            PISA 估計核心（10 推估值 × Fay BRR 80 組）
+│   ├── iea/
+│   │   ├── lib_timss.R       TIMSS／PIRLS／ICCS 估計核心（5 推估值 × JK2 折刀）
+│   │   ├── lib_timss_q.R     問卷量表、推估值迴歸與變異數分解
+│   │   ├── 01_convert.R      TIMSS 八年級轉檔
+│   │   ├── 03_convert_generic.R          TIMSS 四年級與 PIRLS 轉檔
+│   │   ├── 04_convert_questionnaires.R   學生／家長／教師／校長問卷轉檔
+│   │   ├── 05_analysis_q.R   四套評比的問卷分析
+│   │   └── 02_tasa_teps_scaffold.R       臺灣本土資料庫的接入骨架
+│   └── talis/
+│       └── lib_talis.R       TALIS 估計核心（無推估值 × Fay BRR 100 組）
 ├── docs/                     GitHub Pages 來源目錄
 │   ├── index.html            分析平台網站
 │   ├── large-scale-data-analysis-report-APA7.docx
@@ -82,8 +94,8 @@ PISA 資料有兩個地方容易做錯，而且錯了不會報錯：
 │   └── architecture.md       系統架構與擴充方式
 ├── web/
 │   ├── template.html         網站樣板
-│   ├── figs/                 106 張 SVG（亮暗各一版）
-│   ├── png/                  53 張 200 dpi PNG（Word 報告用）
+│   ├── figs/                 136 張 SVG（亮暗各一版）
+│   ├── png/                  68 張 200 dpi PNG（Word 報告用）
 │   ├── pisa_data.json        全部估計結果
 │   └── country_zh.json       國名中文對照
 ├── output/                   分析結果 CSV
@@ -105,10 +117,16 @@ Rscript R/08_export_web.R
 # 3. 產出全部圖表：網頁用 SVG + Word 用 200 dpi PNG（約 13 分鐘）
 Rscript -e 'source("R/09_figures.R"); build_all_figures()'
 
-# 4. 產出 APA 第七版 Word 報告
+# 4. 問卷分析：轉檔、估計、產圖、輸出 JSON（約 20 分鐘）
+Rscript -e 'source("R/iea/04_convert_questionnaires.R"); convert_all()'
+Rscript -e 'source("R/iea/05_analysis_q.R"); analyse_timss(); analyse_pirls(); analyse_iccs()'
+Rscript -e 'source("R/11_figures_q.R"); build_all_q()'
+Rscript -e 'source("R/12_export_q.R"); export_q()'
+
+# 5. 產出 APA 第七版 Word 報告
 Rscript -e 'source("R/10_report_docx.R"); build_report()'
 
-# 5. 建置網站並複製到 docs/
+# 6. 建置網站並複製到 docs/
 ./deploy.sh
 ```
 
