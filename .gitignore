@@ -24,3 +24,7 @@ output/*.docx
 .Rproj.user/
 *.Rproj
 .DS_Store
+
+# 變數字典由原始檔抽出，屬 IEA／OECD 出版品的衍生內容，不隨儲存庫散布；
+# 執行 R/iea/04_convert_questionnaires.R 會重新產生
+output/dict/

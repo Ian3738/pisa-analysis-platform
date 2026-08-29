@@ -652,6 +652,78 @@ footer .fl { display:flex; flex-wrap:wrap; gap:6px 24px; }
     </div>
   </section>
 
+
+  <!-- ============ TIMSS 問卷 ============ -->
+  <section class="panel" id="p-tmq" role="tabpanel" aria-labelledby="t-tmq">
+    <div class="sec">
+      <div class="eyebrow">IEA · TIMSS 2023 問卷分析</div>
+      <h2>學生、教師與校長怎麼說</h2>
+      <p class="lead">TIMSS 除了成就測驗，還向學生、教師與校長各發一份問卷。這些量表以 IRT 量尺化，國際平均 10、標準差 2，而且<strong>一律「高分＝較有利」</strong>——包括「被霸凌」「課堂秩序」這類反向構念，本平台已逐一實測確認方向。</p>
+      <div class="tiles" id="tmqTiles" style="margin:22px 0 26px"></div>
+    </div>
+
+    <div class="stack">
+      <figure>
+        <div class="figbox"><!--FIG:timssq_g8_tw--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 5 個推估值 × JK2 折刀法</div>
+        <figcaption>臺灣八年級數學成就排第 2，但<strong>數學自信排第 46（共 47）</strong>、重視數學第 45、喜歡學數學第 40。另一端則是課堂與人身安全：數學課堂秩序第 2、免於霸凌第 2。高成就與低學習情意在同一份資料裡並存。</figcaption>
+      </figure>
+
+      <figure>
+        <div class="figbox"><!--FIG:timssq_paradox--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 國家層級對照</div>
+        <figcaption>成就與自信在跨國層次上呈現負向關聯：成就愈高的體制，學生的數學自信平均而言愈低。這是所謂「態度—成就悖論」，在個體層次兩者正相關，在國家層次卻反轉——同一份資料在不同分析層次會給出相反的答案。</figcaption>
+      </figure>
+
+      <figure>
+        <div class="figbox"><!--FIG:timssq_actors--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 校長以學生權重、教師以 MATWGT 估計</div>
+        <figcaption>教師檔本身不含權重，教師權重存放於學生—教師連結檔（BST），必須以 IDTEACH 與 IDLINK 併回才能做加權估計。直接拿教師檔計算會得到未加權的結果，這是教師層次分析最常見的錯誤。</figcaption>
+      </figure>
+
+      <figure>
+        <div class="figbox"><!--FIG:timssq_grad--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 推估值迴歸 × JK2</div>
+        <figcaption>家庭教育資源每提高一個標準差對應的數學分數增幅。此係數衡量的是成就對家庭背景的敏感度——數值愈大，代表家庭條件對學習結果的影響愈強。</figcaption>
+      </figure>
+
+      <figure>
+        <div class="figbox"><!--FIG:timssq_icc--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 設計基礎變異數分解</div>
+        <figcaption>校間變異佔總變異的比例。與 PISA 的同一指標定義相同，使用完整抽樣權重，校間與校內恆等相加為總變異。</figcaption>
+      </figure>
+
+      <figure>
+        <div class="figbox"><!--FIG:timssq_g4_tw--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 63 個參與者</div>
+        <figcaption>四年級的型態與八年級一致但幅度較小：數學自信與喜歡學數學仍偏低，課堂秩序與免於霸凌仍偏高。低學習情意不是到了國中才出現。</figcaption>
+      </figure>
+    </div>
+
+    <div class="sec">
+      <h2>各參與者數值</h2>
+      <div class="controls">
+        <div class="ctl-group"><span class="ctl-label">年級</span>
+          <div class="seg" id="tmqGrade" role="group" aria-label="選擇年級"></div></div>
+        <div class="ctl-group"><span class="ctl-label">對象</span>
+          <div class="seg" id="tmqWho" role="group" aria-label="選擇對象"></div></div>
+        <div class="ctl-group"><span class="ctl-label">量表</span>
+          <div class="seg" id="tmqIdx" role="group" aria-label="選擇量表"></div></div>
+      </div>
+      <div class="tablewrap"><table id="tmqTable"></table></div>
+    </div>
+
+    <div class="sec">
+      <div class="eyebrow">方法註記</div>
+      <h2>量表的方向不能用猜的</h2>
+      <div class="prose">
+        <p>「學生被霸凌」（<code>BSBGSB</code>）這個量表，分數高代表被霸凌得多還是少？從名稱看不出來，而猜錯會讓整張圖的意思顛倒。本平台的作法是查對應的分類版（IDX）各類別的連續分數平均：<code>BSDGSB</code> 的類別「幾乎從不」對應的 SCL 平均為 <code>11.75</code>，「幾乎每週」為 <code>6.90</code>——<strong>高分代表較少被霸凌</strong>。</p>
+        <p>同樣的檢查套用到每一個反向構念：「數學課秩序混亂」類別「很少或沒有」對應最高分 <code>13.17</code>，「教學受資源短缺影響」類別「未受影響」對應最高分 <code>12.62</code>。結論一致——<strong>IEA 的合成量表一律將高分設為較有利的一端</strong>。本平台因此把中文標籤全部改寫成正向說法（「免於霸凌」「數學課堂秩序」「數學教學資源充足度」），讓圖表的「往右＝較好」在每一列都成立。</p>
+        <p>這次檢查也抓出一個標錯：PIRLS 的 <code>ASBGERL</code> 起初被寫成「入學前識字能力」，實際的官方標籤是 <code>STUDENTS ENGAGED IN READING LESSONS</code>，即<strong>閱讀課的投入程度</strong>，與入學前無關。</p>
+      </div>
+    </div>
+  </section>
+
   <!-- ============ PIRLS ============ -->
   <section class="panel" id="p-pirls" role="tabpanel" aria-labelledby="t-pirls">
     <div class="sec">
@@ -681,6 +753,60 @@ footer .fl { display:flex; flex-wrap:wrap; gap:6px 24px; }
     </div>
   </section>
 
+
+  <!-- ============ PIRLS 問卷 ============ -->
+  <section class="panel" id="p-prq" role="tabpanel" aria-labelledby="t-prq">
+    <div class="sec">
+      <div class="eyebrow">IEA · PIRLS 2021 問卷分析</div>
+      <h2>四份問卷：學生、家長、教師、校長</h2>
+      <p class="lead">PIRLS 是本平台涵蓋的評比中唯一附有<strong>家長問卷</strong>者，能問到入學前的家庭讀寫活動——這正好落在臺灣相對弱的閱讀項目上。臺灣的家長問卷回收率 99.4%，全體中位數 89.6%，因此以下結果不是低回收造成的選樣偏誤。</p>
+      <div class="tiles" id="prqTiles" style="margin:22px 0 26px"></div>
+    </div>
+
+    <div class="stack">
+      <figure>
+        <div class="figbox"><!--FIG:pirlsq_home_tw--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 61 個參與者</div>
+        <figcaption>臺灣家長回報的<strong>入學前讀寫活動排第 59（共 61）</strong>、入學前讀寫與數學活動第 59、入學前數學活動第 57、家長喜歡閱讀第 58——四項都在末段。但「入學前識字任務」（孩子實際會做的事）排第 24，高於中位數。家長少陪讀，孩子的識字表現卻不差。</figcaption>
+      </figure>
+
+      <figure>
+        <div class="figbox"><!--FIG:pirlsq_early--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 國家層級對照</div>
+        <figcaption>入學前讀寫活動與四年級閱讀成就的跨國關聯。臺灣落在左上方——活動量在全體末段，成就仍在中上。東亞體制普遍呈現同一形態，顯示這條關聯在跨文化比較時可能受作答方式影響，不宜直接讀成因果。</figcaption>
+      </figure>
+
+      <figure>
+        <div class="figbox"><!--FIG:pirlsq_stu_tw--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 64 個參與者</div>
+        <figcaption>臺灣學生的<strong>閱讀自信排第 57、學校歸屬感第 56、閱讀課投入第 51</strong>，與 TIMSS 的數學情意形態一致。免於霸凌第 14 則同樣落在有利的一端。</figcaption>
+      </figure>
+
+      <figure>
+        <div class="figbox"><!--FIG:pirlsq_gap--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 校長問卷 vs 教師問卷</div>
+        <figcaption>校長認為紀律良好的程度與教師認為學校安全有序的程度，跨國相關僅 <strong>r = 0.21</strong>——兩種角色對同一所學校的判斷本來就不太一致。臺灣是落差最大者之一：校長評價排第 5，教師評價排第 54。教師工作滿意度也排第 58（共 61）。</figcaption>
+      </figure>
+
+      <figure>
+        <div class="figbox"><!--FIG:pirlsq_grad--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 推估值迴歸 × JK2</div>
+        <figcaption>入學前讀寫活動每提高一個標準差對應的閱讀分數增幅。此為關聯而非因果——家庭社經地位等混淆因素並未控制，且家長問卷的回收本身在各國間並不隨機。</figcaption>
+      </figure>
+    </div>
+
+    <div class="sec">
+      <h2>各參與者數值</h2>
+      <div class="controls">
+        <div class="ctl-group"><span class="ctl-label">對象</span>
+          <div class="seg" id="prqWho" role="group" aria-label="選擇對象"></div></div>
+        <div class="ctl-group"><span class="ctl-label">量表</span>
+          <div class="seg" id="prqIdx" role="group" aria-label="選擇量表"></div></div>
+      </div>
+      <div class="tablewrap"><table id="prqTable"></table></div>
+    </div>
+  </section>
+
   <!-- ============ ICCS ============ -->
   <section class="panel" id="p-iccs" role="tabpanel" aria-labelledby="t-iccs">
     <div class="sec">
@@ -701,6 +827,98 @@ footer .fl { display:flex; flex-wrap:wrap; gap:6px 24px; }
     <div class="sec">
       <h2>各參與者數值</h2>
       <div class="tablewrap"><table id="iccsTable"></table></div>
+    </div>
+  </section>
+
+
+  <!-- ============ ICCS 學生態度 ============ -->
+  <section class="panel" id="p-icq" role="tabpanel" aria-labelledby="t-icq">
+    <div class="sec">
+      <div class="eyebrow">IEA · ICCS 2022 學生問卷</div>
+      <h2>公民態度的 30 個量表</h2>
+      <p class="lead">ICCS 除了公民知識測驗，還有 30 個公民態度與參與意向的量表（IRT 量尺，國際平均 50、標準差 10）。臺灣在其中 <strong>11 個排第 1、6 個排第 2</strong>——這個結果本身值得警覺，因為它也可能來自作答傾向而非實質差異。</p>
+      <div class="tiles" id="icqTiles" style="margin:22px 0 26px"></div>
+    </div>
+
+    <div class="stack">
+      <figure>
+        <div class="figbox"><!--FIG:iccsq_tw--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 5 個推估值 × JK2 折刀法</div>
+        <figcaption>臺灣的原始剖面：在校的公民學習經驗高出中位數 11.4 分，支持族群平等、性別平等、對移民的正向態度都排第 1。另一端是<strong>參與社區團體排第 24（最後）</strong>、預期參與非法抗議第 23、對政治體制的批判第 19。</figcaption>
+      </figure>
+
+      <figure>
+        <div class="figbox"><!--FIG:iccsq_resp--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 30 個量表的國家平均</div>
+        <figcaption>把 30 個量表平均起來，得到的是各參與者的整體作答傾向。<strong>臺灣 52.91 為全體最高</strong>，荷蘭 47.33 最低，全距 5.6 分。這代表在比較單一量表時，有一部分差異來自「對任何正向敘述都比較容易同意」，而不是該項態度本身。</figcaption>
+      </figure>
+
+      <figure>
+        <div class="figbox"><!--FIG:iccsq_ips--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 國內置中的穩健性檢查</div>
+        <figcaption>扣掉各國自身的整體平均後，臺灣的剖面明顯改變。<strong>四項仍居第 1</strong>：公民學習經驗、對移民的態度、同學互動、師生關係——都與學校生活直接相關。但預期參與合法抗議由第 11 掉到第 24、校外討論政治議題由第 13 掉到第 24、預期積極政治參與由第 13 掉到第 24。兩種算法都不是唯一的真相，並列才能框出結論的範圍。</figcaption>
+      </figure>
+    </div>
+
+    <div class="sec">
+      <h2>各參與者數值</h2>
+      <div class="controls">
+        <div class="ctl-group"><span class="ctl-label">對象</span>
+          <div class="seg" id="icqWho" role="group" aria-label="選擇對象"></div></div>
+        <div class="ctl-group"><span class="ctl-label">量表</span>
+          <div class="seg" id="icqIdx" role="group" aria-label="選擇量表"></div></div>
+      </div>
+      <div class="tablewrap"><table id="icqTable"></table></div>
+    </div>
+
+    <div class="sec">
+      <div class="eyebrow">方法註記</div>
+      <h2>排名第 1 有兩種可能</h2>
+      <div class="prose">
+        <p>臺灣在 30 個公民態度量表中有 11 個排第 1、6 個排第 2，而且整體平均 52.91 是 24 個參與者之冠。這有兩種解讀：一是臺灣學生的公民態度確實普遍較正向；二是存在<strong>應答風格</strong>——對 Likert 式的正向敘述較容易表示同意。單看原始分數無法區分這兩者。</p>
+        <p>本平台採用的檢查是<strong>國內置中</strong>（ipsatization）：把每個參與者的各量表分數減去該參與者在 30 個量表上的平均，只留下「相對於自己的強弱」。這個轉換會把整體作答傾向消掉，代價是也消掉了真實的整體差異——因此它是穩健性檢查，不是更正確的答案。</p>
+        <p>結果具有診斷力。臺灣在「在校的公民學習經驗」「對移民的正向態度」「對同學互動的觀感」「對師生關係的觀感」四項<strong>置中後仍是第 1</strong>，這些不能只用作答傾向解釋。但「預期參與合法抗議」「校外討論政治社會議題」「預期積極政治參與」「以數位媒體參與公共議題」四項<strong>置中後全部落到第 24</strong>——原本的中段名次是被整體偏高的作答傾向撐起來的。</p>
+        <p>另有一項自動攔截：<code>S_NISB</code>（家庭社經地位指標）的各國加權平均全距為 <code>0.000</code>，因為它在各國內部標準化，本來就不能跨國排名，已排除於所有圖表之外。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ICCS 趨勢 ============ -->
+  <section class="panel" id="p-ictr" role="tabpanel" aria-labelledby="t-ictr">
+    <div class="sec">
+      <div class="eyebrow">IEA · ICCS 2016 → 2022</div>
+      <h2>臺灣拿第 1，有一部分是別人掉下來</h2>
+      <p class="lead">ICCS 2022 的 24 個參與者中，有 15 個也參加了 2016 年。把兩輪並排看，臺灣 2022 年的第 1 名有了不同的意義。</p>
+      <div class="tiles" id="ictrTiles" style="margin:22px 0 26px"></div>
+    </div>
+
+    <div class="stack">
+      <figure>
+        <div class="figbox"><!--FIG:iccsq_trend_know--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 5 個推估值 × JK2 折刀法</div>
+        <figcaption>15 個兩輪皆參與者中，<strong>7 個顯著下滑、沒有任何一個顯著上升</strong>：挪威 −34.5 分、丹麥 −30.4、哥倫比亞 −30.0、保加利亞 −29.2、斯洛維尼亞 −28.0。臺灣 +1.9 分（未達顯著）＝持平。2016 年丹麥 586.3 分高於臺灣 581.1 分；2022 年丹麥掉到 555.9，臺灣 583.1——<strong>名次的變化來自別人下降，不是臺灣上升</strong>。</figcaption>
+      </figure>
+
+      <figure>
+        <div class="figbox"><!--FIG:iccsq_trend_att--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 19 個兩輪共通的量表</div>
+        <figcaption>臺灣學生的公民態度變化：在校的公民活動參與 +4.1、校外討論政治社會議題 +2.8、在校的公民學習經驗 +2.7 為升幅最大者；<strong>預期參與合法抗議 −3.5</strong>、對宗教影響社會的態度 −2.4、預期未來的投票參與 −1.5 為降幅最大者。校內公民參與上升，校外的政治參與意向下降。</figcaption>
+      </figure>
+    </div>
+
+    <div class="sec">
+      <h2>各參與者的變化</h2>
+      <div class="tablewrap"><table id="ictrTable"></table></div>
+    </div>
+
+    <div class="sec">
+      <div class="eyebrow">方法註記</div>
+      <h2>這裡的標準誤比 PISA 那一頁寬鬆</h2>
+      <div class="prose">
+        <p>本平台在 PISA 的趨勢分析中示範過：跨輪次比較必須把<strong>連結誤差</strong>納入標準誤，否則會把不顯著的差異判成顯著（PISA 的 396 組比較中有 16 組因此翻轉）。同一個要求也適用於 ICCS，但本平台目前<strong>沒有</strong>取得 ICCS 2022 的連結誤差數值，因此此頁的標準誤只含兩輪各自的抽樣與推估變異，是低估的。</p>
+        <p>這對結論的影響是可以評估的：挪威 −34.5、丹麥 −30.4 這類幅度遠超過任何合理的連結誤差，方向與顯著性不會改變；而臺灣 +1.9 分在目前的寬鬆標準下就已經不顯著，加入連結誤差只會讓它更不顯著。真正受影響的是中間地帶——立陶宛 −8.9 與荷蘭 −14.6 這種量級的判定應視為暫定。</p>
+        <p>態度量表的跨輪比較還多一層不確定：兩輪的量尺是否完全等價，本平台未能驗證。兩輪的整體平均（2016 年 50.23、2022 年 49.72）接近，顯示量尺沒有大幅漂移，但這只是必要條件而非充分條件。態度趨勢圖因此標示為型態參考，不作為效果量的精確估計。</p>
+      </div>
     </div>
   </section>
 
@@ -971,6 +1189,7 @@ const SCHOOL = /*__SCHOOL_DATA__*/ null /*__END__*/;
 const OPT = /*__OPT_DATA__*/ null /*__END__*/;
 const TIMSS = /*__TIMSS_DATA__*/ null /*__END__*/;
 const TALIS = /*__TALIS_DATA__*/ null /*__END__*/;
+const QD    = /*__Q_DATA__*/ null /*__END__*/;
 const IEA = /*__IEA_DATA__*/ null /*__END__*/;
 
 const $  = (s, r) => (r || document).querySelector(s);
@@ -1044,8 +1263,11 @@ const TABS = [
   ['desc','PISA 描述統計','pisa'],    ['trend','PISA 趨勢','pisa'],
   ['link','PISA 連結誤差','pisa'],    ['country','PISA 各國比較','pisa'],
   ['equity','PISA 公平性','pisa'],    ['school','PISA 學校層級','pisa'],
-  ['extra','PISA 選考領域','pisa'],   ['timss','TIMSS','timss'],
-  ['pirls','PIRLS','pirls'],          ['iccs','ICCS','iccs'],           ['talis','TALIS','talis'],
+  ['extra','PISA 選考領域','pisa'],   ['timss','TIMSS 成就','timss'],
+  ['tmq','TIMSS 問卷','timss'],       ['pirls','PIRLS 成就','pirls'],
+  ['prq','PIRLS 問卷','pirls'],       ['iccs','ICCS 公民知識','iccs'],
+  ['icq','ICCS 學生態度','iccs'],     ['ictr','ICCS 趨勢','iccs'],
+  ['talis','TALIS','talis'],
   ['cross','跨評比對照','cross'],     ['method','方法學','meta'],
   ['system','系統','meta']];
 
@@ -1053,9 +1275,9 @@ const TABS = [
 const DS_FILTER = {
   all:   null,
   pisa:  ['home','overview','desc','trend','link','country','equity','school','extra','cross','method','system'],
-  timss: ['home','timss','cross','method','system'],
-  pirls: ['home','pirls','cross','method','system'],
-  iccs:  ['home','iccs','cross','method','system'],
+  timss: ['home','timss','tmq','cross','method','system'],
+  pirls: ['home','pirls','prq','cross','method','system'],
+  iccs:  ['home','iccs','icq','ictr','cross','method','system'],
   talis: ['home','talis','cross','method','system']
 };
 const DS_LABEL = { all:'全部', pisa:'PISA', timss:'TIMSS', pirls:'PIRLS', iccs:'ICCS', talis:'TALIS' };
@@ -1114,6 +1336,22 @@ const TAB_CTX = {
     d: 'TALIS 2024 教師與校長調查（<span class="n">55</span> 個參與者）＋ TALIS 2018 臺灣校長（<span class="n">202</span> 位）',
     q: '教師的自我效能感與工作滿意度如何？臺灣的學校自主權與資源狀況？',
     f: '日本教師自我效能感 7.14 與工作滿意度 8.64 皆為全體最低；<em>臺灣 2018 年學校自主權偏低、資源相對充裕</em>'},
+  tmq: {
+    d: 'TIMSS 2023 學生、教師與校長問卷，15 個學生量表 × <span class="n">47</span> 個參與者',
+    q: '成就名列前茅的學生，學習情意如何？教師與校長怎麼看自己的學校？',
+    f: '臺灣數學成就第 2，但<em>數學自信第 46、重視數學第 45</em>；課堂秩序與免於霸凌則排第 2'},
+  prq: {
+    d: 'PIRLS 2021 學生、家長、教師與校長四份問卷，<span class="n">64</span> 個參與者',
+    q: '入學前的家庭讀寫活動、學生的閱讀情意、教師的工作滿意度？',
+    f: '臺灣家長的<em>入學前讀寫活動排第 59（共 61）</em>；教師工作滿意度第 58（共 61）'},
+  icq: {
+    d: 'ICCS 2022 學生公民態度 30 個量表，<span class="n">24</span> 個參與者',
+    q: '臺灣學生的公民態度真的全面領先，還是作答傾向造成的？',
+    f: '原始 11 項第 1；<em>國內置中後校內經驗仍第 1，校外政治參與全落到第 24</em>'},
+  ictr: {
+    d: 'ICCS 2016 → 2022 的公民知識與態度變化，<span class="n">15</span> 個兩輪皆參與者',
+    q: '臺灣的第 1 名是自己進步，還是別人退步？',
+    f: '臺灣 +1.9 分持平，<em>15 個參與者中 7 個顯著下滑、0 個上升</em>（挪威 −34.5、丹麥 −30.4）'},
   cross: {
     d: '五套評比十個項目的對照，以及各資料庫的設計差異',
     q: '換一套主辦單位、換一種測驗取向，結論會一樣嗎？',
@@ -1134,14 +1372,14 @@ const DATASETS = [
    rows:[['學生','174.5 萬名'],['參與','98 個經濟體'],['分析','7 個分頁']],
    res:'臺灣數學第 <b>3</b>、科學第 <b>4</b>、閱讀第 <b>5</b>；創造思考第 <b>16</b>'},
   {ds:'timss', org:'IEA', nm:'TIMSS 2023', sub:'數學與科學教育成就趨勢調查 · 四／八年級',
-   rows:[['學生','72.0 萬名'],['參與','63／47 個'],['分析','1 個分頁']],
-   res:'臺灣八年級數學第 <b>2</b>、科學第 <b>2</b>；四年級數學第 <b>2</b>'},
+   rows:[['學生','72.0 萬名'],['教師','1.5 萬名'],['分析','2 個分頁']],
+   res:'數學第 <b>2</b>，但<b>數學自信第 46</b>（共 47）——高成就與低學習情意並存'},
   {ds:'pirls', org:'IEA', nm:'PIRLS 2021', sub:'國際閱讀素養進展研究 · 四年級',
-   rows:[['學生','36.8 萬名'],['參與','65 個'],['分析','1 個分頁']],
-   res:'臺灣第 <b>15</b> 名——十項評比中相對位置最低者之一'},
-  {ds:'iccs',  org:'IEA', nm:'ICCS 2022', sub:'國際公民教育與素養調查 · 八年級',
-   rows:[['學生','8.2 萬名'],['參與','24 個'],['分析','1 個分頁']],
-   res:'臺灣<b>第 1 名</b>，領先第 2 名瑞典 18.4 分'},
+   rows:[['學生','36.8 萬名'],['問卷','學生／家長／師／校'],['分析','2 個分頁']],
+   res:'閱讀第 <b>15</b>；家長的<b>入學前讀寫活動第 59</b>（共 61）'},
+  {ds:'iccs',  org:'IEA', nm:'ICCS 2016 · 2022', sub:'國際公民教育與素養調查 · 八年級',
+   rows:[['學生','8.2 萬名'],['態度量表','30 個'],['分析','3 個分頁']],
+   res:'公民知識<b>第 1 名</b>，但同期 <b>7／15 個參與者顯著下滑</b>、無人上升'},
   {ds:'talis', org:'OECD', nm:'TALIS 2024 · 2018', sub:'教學與學習國際調查 · 教師與校長',
    rows:[['教師','19.5 萬名'],['校長','1.16 萬名'],['參與','55／47 個']],
    rows2:null,
@@ -1704,6 +1942,145 @@ function drawTal() {
 }
 
 initSch(); drawSch(); initTm(); drawTm(); drawPirls(); drawIccs(); initTal(); drawTal();
+
+/* ---------- 問卷分析（TIMSS／PIRLS／ICCS） ---------- */
+/* 國名沿用既有的 inm()：IEA → TIMSS → ICCS 三張對照表依序查 */
+const qName = inm;
+
+function qUnique(rows) {
+  const seen = new Set(), out = [];
+  rows.forEach(r => { if (!seen.has(r.idx)) { seen.add(r.idx); out.push({value:r.idx, label:r.zh}); } });
+  return out;
+}
+function qTable(hostId, rows, valLab, dec) {
+  const sorted = rows.slice().sort((a,b) => b.mean - a.mean);
+  let s = '<thead><tr><th>#</th><th>國家／經濟體</th><th>' + valLab +
+          '</th><th>SE</th><th>樣本數</th></tr></thead><tbody>';
+  sorted.forEach((r, i) => {
+    const tw = r.CNT === 'TWN' ? ' class="hl"' : '';
+    s += '<tr' + tw + '><td>' + (i+1) + '</td><td>' + qName(r.CNT) + '</td><td>' +
+         fmt(r.mean, dec) + '</td><td>' + fmt(r.se, 3) + '</td><td>' +
+         (r.n ? r.n.toLocaleString('en-US') : '—') + '</td></tr>';
+  });
+  $(hostId).innerHTML = s + '</tbody>';
+}
+function tiles(hostId, items) {
+  $(hostId).innerHTML = items.map(t => '<div class="tile"><div class="k">' + t[0] +
+    '</div><div class="v">' + t[1] + '</div><div class="n">' + t[2] + '</div></div>').join('');
+}
+function twRow(rows, idx) { return rows.find(r => r.idx === idx && r.CNT === 'TWN') || {}; }
+
+/* TIMSS 問卷 */
+let tmqGrade = 'g8', tmqWho = 'stu', tmqIdx = null;
+function tmqRows() {
+  const g = QD.timss[tmqGrade] || {};
+  const src = tmqWho === 'stu' ? g.scales : (tmqWho === 'sch' ? g.sch : g.tch);
+  return arr(src);
+}
+function initTmq() {
+  seg($('#tmqGrade'), [{value:'g8',label:'八年級'},{value:'g4',label:'四年級'}], tmqGrade, v => {
+    tmqGrade = v; if (v === 'g4') tmqWho = 'stu'; tmqIdx = null; initTmq(); drawTmq(); });
+  const whoOpts = tmqGrade === 'g8'
+    ? [{value:'stu',label:'學生'},{value:'sch',label:'校長'},{value:'tch',label:'數學教師'}]
+    : [{value:'stu',label:'學生'}];
+  seg($('#tmqWho'), whoOpts, tmqWho, v => { tmqWho = v; tmqIdx = null; initTmq(); drawTmq(); });
+  const opts = qUnique(tmqRows());
+  if (!tmqIdx || !opts.some(o => o.value === tmqIdx)) tmqIdx = opts.length ? opts[0].value : null;
+  seg($('#tmqIdx'), opts, tmqIdx, v => { tmqIdx = v; drawTmq(); });
+}
+function drawTmq() {
+  const g8 = QD.timss.g8, m = QD.meta.timss;
+  const conf = twRow(arr(g8.scales), 'BSBGSCM'), sb = twRow(arr(g8.scales), 'BSBGSB');
+  const her = arr(g8.grad).find(r => r.idx === 'BSBGHER' && r.CNT === 'TWN') || {};
+  tiles('#tmqTiles', [
+    ['參與者', m.g8_country + '／' + m.g4_country, '八年級／四年級'],
+    ['數學教師', (m.g8_teacher || 0).toLocaleString('en-US'), '八年級數學教師樣本'],
+    ['臺灣數學自信', '第 ' + (conf.rank || '—'), '共 ' + (conf.ntot || '—') + ' 個參與者'],
+    ['臺灣免於霸凌', '第 ' + (sb.rank || '—'), '共 ' + (sb.ntot || '—') + ' 個參與者'],
+    ['家庭資源梯度', her.beta ? fmt(her.beta, 1) + ' 分' : '—', '每一個標準差']
+  ]);
+  const rows = tmqRows().filter(r => r.idx === tmqIdx);
+  const lab = (rows[0] || {}).zh || tmqIdx || '';
+  qTable('#tmqTable', rows, lab, 2);
+}
+
+/* PIRLS 問卷 */
+let prqWho = 'stu', prqIdx = null;
+function prqRows() { return arr(QD.pirls[prqWho]); }
+function initPrq() {
+  seg($('#prqWho'), [{value:'stu',label:'學生'},{value:'home',label:'家長'},
+                     {value:'sch',label:'校長'},{value:'tch',label:'教師'}], prqWho, v => {
+    prqWho = v; prqIdx = null; initPrq(); drawPrq(); });
+  const opts = qUnique(prqRows());
+  if (!prqIdx || !opts.some(o => o.value === prqIdx)) prqIdx = opts.length ? opts[0].value : null;
+  seg($('#prqIdx'), opts, prqIdx, v => { prqIdx = v; drawPrq(); });
+}
+function drawPrq() {
+  const m = QD.meta.pirls;
+  const ela = twRow(arr(QD.pirls.home), 'ASBHELA'), tjs = twRow(arr(QD.pirls.tch), 'ATBGTJS');
+  const scr = twRow(arr(QD.pirls.stu), 'ASBGSCR');
+  tiles('#prqTiles', [
+    ['參與者', m.country, '含次國家層級實體'],
+    ['家長問卷回收率', (m.home_resp_tw * 100).toFixed(1) + '%', '全體中位數 ' + (m.home_resp_med*100).toFixed(1) + '%'],
+    ['入學前讀寫活動', '第 ' + (ela.rank || '—'), '共 ' + (ela.ntot || '—') + ' 個參與者'],
+    ['學生閱讀自信', '第 ' + (scr.rank || '—'), '共 ' + (scr.ntot || '—') + ' 個參與者'],
+    ['教師工作滿意度', '第 ' + (tjs.rank || '—'), '共 ' + (tjs.ntot || '—') + ' 個參與者']
+  ]);
+  const rows = prqRows().filter(r => r.idx === prqIdx);
+  qTable('#prqTable', rows, (rows[0] || {}).zh || prqIdx || '', 2);
+}
+
+/* ICCS 學生態度 */
+let icqWho = 'stu', icqIdx = null;
+function icqRows() { return arr(QD.iccs[icqWho]); }
+function initIcq() {
+  seg($('#icqWho'), [{value:'stu',label:'學生'},{value:'tch',label:'教師'},
+                     {value:'sch',label:'校長'}], icqWho, v => {
+    icqWho = v; icqIdx = null; initIcq(); drawIcq(); });
+  const opts = qUnique(icqRows()).filter(o => o.value !== 'S_NISB');
+  if (!icqIdx || !opts.some(o => o.value === icqIdx)) icqIdx = opts.length ? opts[0].value : null;
+  seg($('#icqIdx'), opts, icqIdx, v => { icqIdx = v; drawIcq(); });
+}
+function drawIcq() {
+  const m = QD.meta.iccs, resp = arr(QD.iccs.resp);
+  const tw = resp.find(r => r.CNT === 'TWN') || {};
+  const ips = arr(QD.iccs.ips).filter(r => r.CNT === 'TWN');
+  const first = ips.filter(r => r.rank_raw === 1).length;
+  const keep  = ips.filter(r => r.rank_ips === 1).length;
+  tiles('#icqTiles', [
+    ['參與者', m.country, 'ICCS 2022'],
+    ['態度量表', m.n_scale, '不含國內標準化的 S_NISB'],
+    ['臺灣整體平均', fmt(tw.cmean, 2), '全體最高，國際平均 50'],
+    ['原始第 1 名', first + ' 項', '共 ' + m.n_scale + ' 個量表'],
+    ['置中後仍第 1', keep + ' 項', '扣掉整體作答傾向後']
+  ]);
+  const rows = icqRows().filter(r => r.idx === icqIdx);
+  qTable('#icqTable', rows, (rows[0] || {}).zh || icqIdx || '', 1);
+}
+
+/* ICCS 趨勢 */
+function drawIctr() {
+  const K = arr(QD.iccs.trend_know), m = QD.meta.iccs;
+  const down = K.filter(r => r.sig && r.diff < 0).length;
+  const tw = K.find(r => r.CNT === 'TWN') || {};
+  tiles('#ictrTiles', [
+    ['兩輪皆參與', K.length + ' 個', '2016 與 2022'],
+    ['顯著下滑', down + ' 個', '占 ' + Math.round(down / K.length * 100) + '%'],
+    ['臺灣變化', (tw.diff > 0 ? '+' : '') + fmt(tw.diff, 1) + ' 分', tw.sig ? '達顯著' : '未達顯著'],
+    ['共通態度量表', m.trend_common + ' 個', '兩輪皆施測']
+  ]);
+  let s = '<thead><tr><th>#</th><th>國家／經濟體</th><th>2016</th><th>2022</th>' +
+          '<th>變化</th><th>SE</th><th>判定</th></tr></thead><tbody>';
+  K.slice().sort((a,b) => b.diff - a.diff).forEach((r, i) => {
+    s += '<tr' + (r.CNT === 'TWN' ? ' class="hl"' : '') + '><td>' + (i+1) + '</td><td>' +
+      qName(r.CNT) + '</td><td>' + fmt(r.y16, 1) + '</td><td>' + fmt(r.y22, 1) + '</td><td>' +
+      (r.diff > 0 ? '+' : '') + fmt(r.diff, 1) + '</td><td>' + fmt(r.sed, 2) + '</td><td>' +
+      badge(r.sig) + '</td></tr>';
+  });
+  $('#ictrTable').innerHTML = s + '</tbody>';
+}
+initTmq(); drawTmq(); initPrq(); drawPrq(); initIcq(); drawIcq(); drawIctr();
+
 
 /*__DL_JS__*/
 </script>

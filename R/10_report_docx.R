@@ -154,6 +154,21 @@ build_report <- function() {
   TL18  <- as.data.table(TAL$t2018$principals); TL18I <- as.data.table(TAL$t2018$idx)
   TLINV <- as.data.table(TAL$t2018$invariance)
   TLN   <- setNames(as.data.table(TAL$names)$zh, as.data.table(TAL$names)$CNT)
+  QD    <- fromJSON(file.path(PISA_ROOT, "web", "q_data.json"))
+  QG8   <- as.data.table(QD$timss$g8$scales); QG8S <- as.data.table(QD$timss$g8$sch)
+  QG8T  <- as.data.table(QD$timss$g8$tch);    QG4  <- as.data.table(QD$timss$g4$scales)
+  QG8G  <- as.data.table(QD$timss$g8$grad);   QG8I <- as.data.table(QD$timss$g8$icc)
+  QPS   <- as.data.table(QD$pirls$stu);  QPH <- as.data.table(QD$pirls$home)
+  QPC   <- as.data.table(QD$pirls$sch);  QPT <- as.data.table(QD$pirls$tch)
+  QIS   <- as.data.table(QD$iccs$stu);   QII <- as.data.table(QD$iccs$ips)
+  QIR   <- as.data.table(QD$iccs$resp);  QIK <- as.data.table(QD$iccs$trend_know)
+  QIA   <- as.data.table(QD$iccs$trend_att)
+  # 臺灣在某一份問卷上的名次表（依名次排序）
+  # 名稱前綴 q_ 是刻意的：本函式後段已把 rk 當作 data.table 變數使用，
+  # 若這裡也叫 rk，helper 會在中途被覆寫，且錯誤要到很後面才浮現。
+  q_tw   <- function(d) d[CNT == "TWN"][order(rank)]
+  q_rank <- function(d, i) { r <- d[CNT == "TWN" & idx == i]; if (nrow(r)) r$rank[1] else NA_integer_ }
+  q_ntot <- function(d, i) { r <- d[CNT == "TWN" & idx == i]; if (nrow(r)) r$ntot[1] else NA_integer_ }
   TMM   <- as.data.table(TIM$means); TBEN <- as.data.table(TIM$bench)
   TNM   <- setNames(as.data.table(TIM$names)$zh, as.data.table(TIM$names)$CNT)
   gi <- function(cnt, cy, dm, col) { z <- ICC[CNT==cnt & cycle==cy & domain==dm]; if (nrow(z)) z[[col]] else NA }
@@ -656,8 +671,143 @@ build_report <- function() {
 
   doc <- body_add_break(doc)
 
-  # ---------- 玖、TALIS ----------
-  doc <- add_h1(doc, "玖、教師與校長調查結果")
+  # ---------- 玖、問卷分析 ----------
+  doc <- add_h1(doc, "玖、學生、家長、教師與校長問卷分析")
+  doc <- add_body(doc,
+    "前述各章處理的是成就測驗的分數。IEA 的三套評比另有配套問卷：TIMSS 向學生、教師與校長各發一份，PIRLS 再加上一份家長問卷，ICCS 則以 30 個量表測量學生的公民態度與參與意向。這些問卷的合成量表以試題反應理論量尺化，TIMSS 與 PIRLS 的國際平均為 10、標準差 2，ICCS 為 50 與 10。本章的估計方式與成就分數相同，惟量表分數是單一觀測值而非推估值，因此變異數只含抽樣一項，沒有推估變異。")
+
+  doc <- add_h2(doc, "一、TIMSS 2023 學生問卷：高成就與低學習情意並存")
+  doc <- add_body(doc, sprintf(
+    "臺灣八年級學生的數學成就排名第 2，但在學習情意的各項量表上位置明顯偏後：數學自信排第 %d、重視數學第 %d、喜歡學數學第 %d（皆共 %d 個參與者）。另一端則是課堂與人身安全：數學課堂秩序排第 %d、免於霸凌第 %d。同一份資料同時呈現卓越的成就與偏低的學習情意，兩者並不矛盾，但也不能互相取代。",
+    q_rank(QG8,"BSBGSCM"), q_rank(QG8,"BSBGSVM"), q_rank(QG8,"BSBGSLM"), q_ntot(QG8,"BSBGSCM"),
+    q_rank(QG8,"BSBGDML"), q_rank(QG8,"BSBGSB")))
+  doc <- add_figure(doc, fn, "timssq_g8_tw",
+    "TIMSS 2023 八年級：臺灣學生問卷量表與全體中位數之差",
+    "橫軸為臺灣的加權平均減去全體參與者的中位數。IEA 的合成量表一律將高分設為較有利的一端，故往右即代表較有利。自然相關量表僅分科授課的 30 個參與者有值，臺灣為統整課程，該類量表的參與者數較少。"); fn <- fn + 1
+  doc <- add_figure(doc, fn, "timssq_paradox",
+    "數學成就與數學自信的國家層級關聯",
+    "每一點為一個參與者的加權平均。兩者在跨國層次呈負向關聯：成就愈高的體制，學生的數學自信平均而言愈低。此即所謂態度與成就的悖論——在學生個體層次兩者為正相關，在國家層次卻反轉。分析層次不同，結論方向相反，詮釋時須明確交代是在哪一個層次上立論。"); fn <- fn + 1
+
+  t11_ <- q_tw(QG8)[, .(量表 = zh, 臺灣 = sprintf("%.2f", mean), SE = sprintf("%.3f", se),
+                      名次 = rank, 參與者數 = ntot)]
+  doc <- add_table(doc, 11, apa_table(t11_), "TIMSS 2023 八年級臺灣學生問卷量表估計值",
+    "依名次排序。標準誤以 JK2 折刀法估計。量表分數為試題反應理論量尺，國際平均 10、標準差 2。")
+
+  doc <- add_figure(doc, fn, "timssq_g4_tw",
+    "TIMSS 2023 四年級：臺灣學生問卷量表與全體中位數之差",
+    sprintf("共 %d 個參與者。四年級的型態與八年級一致而幅度較小：數學自信與喜歡學數學仍偏低，課堂秩序與免於霸凌仍偏高。此一形態並非到了國中階段才出現。",
+            QD$meta$timss$g4_country)); fn <- fn + 1
+
+  doc <- add_h2(doc, "二、教師與校長問卷")
+  doc <- add_body(doc, sprintf(
+    "TIMSS 的教師檔本身不含權重。教師權重（TCHWGT 與分科的 MATWGT、SCIWGT）存放於學生—教師連結檔，必須以學校、教師與連結編號併回後方能進行加權估計；直接以教師檔計算會得到未加權的結果。本研究的八年級數學教師樣本為 %s 人。臺灣教師回報的學校對學業的強調排第 %d、學校安全有序程度第 %d、工作滿意度第 %d（共 %d 個參與者）。",
+    format(QD$meta$timss$g8_teacher, big.mark = ","),
+    q_rank(QG8T,"BTBGEAS"), q_rank(QG8T,"BTBGSOS"), q_rank(QG8T,"BTBGTJS"), q_ntot(QG8T,"BTBGTJS")))
+  doc <- add_figure(doc, fn, "timssq_actors",
+    "TIMSS 2023 八年級：臺灣的校長與教師問卷量表",
+    "校長問卷的量表併至學生層次後以學生權重估計，代表的是「學生就讀學校的平均狀況」而非「學校的平均狀況」，兩者在學校規模差異大時並不相同。教師問卷以數學教師權重估計。"); fn <- fn + 1
+
+  doc <- add_h2(doc, "三、家庭背景的梯度與學校層級的分化")
+  twg <- QG8G[CNT == "TWN" & idx == "BSBGHER"]
+  doc <- add_body(doc, sprintf(
+    "家庭教育資源每提高一個標準差，臺灣八年級學生的數學分數增加 %.1f 分（SE = %.2f）。此係數衡量的是成就對家庭背景的敏感度，數值愈大代表家庭條件對學習結果的影響愈強。校間變異方面，臺灣數學成就的校間變異佔總變異的 %.1f%%。",
+    twg$beta, twg$se, 100 * QG8I[CNT == "TWN"]$icc))
+  doc <- add_figure(doc, fn, "timssq_grad",
+    "家庭教育資源的梯度：每提高一個標準差對應的數學分數增幅",
+    "以 5 個推估值搭配 JK2 折刀法估計，預測變數已標準化，橫線為 95% 信賴區間。此為關聯而非因果，未控制其他家庭與學校特徵。"); fn <- fn + 1
+  doc <- add_figure(doc, fn, "timssq_icc",
+    "TIMSS 2023 八年級數學成就的校間變異比例",
+    "設計基礎分解，使用完整抽樣權重，校間與校內恆等相加為總變異。定義與本報告第陸節的 PISA 分析相同，惟兩者的目標母體與施測年齡不同，數值不宜直接對照。"); fn <- fn + 1
+
+  doc <- add_h2(doc, "四、PIRLS 2021：唯一附有家長問卷的評比")
+  doc <- add_body(doc, sprintf(
+    "PIRLS 是本研究涵蓋的評比中唯一附有家長問卷者，可測得入學前的家庭讀寫活動。臺灣家長回報的入學前讀寫活動排第 %d、入學前讀寫與數學活動第 %d、入學前數學活動第 %d、家長喜歡閱讀第 %d（共 %d 個參與者），四項均在末段。惟「入學前識字任務」——即孩子入學前實際能完成的讀寫任務——排第 %d，高於中位數。家長回報的陪伴活動偏少，孩子的入學前識字表現卻不差。",
+    q_rank(QPH,"ASBHELA"), q_rank(QPH,"ASBHELN"), q_rank(QPH,"ASBHENA"), q_rank(QPH,"ASBHPLR"),
+    q_ntot(QPH,"ASBHELA"), q_rank(QPH,"ASBHELT")))
+  doc <- add_body(doc, sprintf(
+    "此一結果不是低回收造成的選樣偏誤：臺灣的家長問卷回收率為 %.1f%%，全體參與者的中位數為 %.1f%%。",
+    100 * QD$meta$pirls$home_resp_tw, 100 * QD$meta$pirls$home_resp_med))
+  doc <- add_figure(doc, fn, "pirlsq_home_tw",
+    "PIRLS 2021：臺灣家長問卷量表與全體中位數之差",
+    "橫軸為臺灣的加權平均減去全體參與者的中位數。家長問卷由學生帶回填答，各參與者的回收率不同，比較時須併同回收率一併檢視。"); fn <- fn + 1
+  doc <- add_figure(doc, fn, "pirlsq_early",
+    "入學前的家庭讀寫活動與四年級閱讀成就",
+    "臺灣落在圖的左上方：活動量在全體末段，閱讀成就仍在中上。東亞體制普遍呈現同一形態，顯示這條跨國關聯可能受作答方式的文化差異影響，不宜直接讀為因果。"); fn <- fn + 1
+  doc <- add_figure(doc, fn, "pirlsq_stu_tw",
+    "PIRLS 2021：臺灣學生問卷量表與全體中位數之差",
+    sprintf("共 %d 個參與者。閱讀自信排第 %d、學校歸屬感第 %d，與 TIMSS 的數學情意形態一致，顯示此一形態跨科目而穩定。",
+            QD$meta$pirls$country, q_rank(QPS,"ASBGSCR"), q_rank(QPS,"ASBGSSB"))); fn <- fn + 1
+  doc <- add_figure(doc, fn, "pirlsq_gap",
+    "校長與教師對同一所學校的觀感",
+    sprintf("校長評估的學校紀律與教師評估的學校安全有序，跨國相關僅 r = 0.21。臺灣是落差最大者之一：校長的評價排第 %d，教師的評價排第 %d。以單一來源的問卷推論學校氣氛，結論會隨受訪對象而變。",
+            q_rank(QPC,"ACBGDAS"), q_rank(QPT,"ATBGSOS"))); fn <- fn + 1
+
+  t12_ <- q_tw(QPH)[, .(量表 = zh, 臺灣 = sprintf("%.2f", mean), SE = sprintf("%.3f", se),
+                      名次 = rank, 參與者數 = ntot)]
+  doc <- add_table(doc, 12, apa_table(t12_), "PIRLS 2021 臺灣家長問卷量表估計值",
+    sprintf("依名次排序。臺灣的家長問卷回收率 %.1f%%，全體中位數 %.1f%%。",
+            100*QD$meta$pirls$home_resp_tw, 100*QD$meta$pirls$home_resp_med))
+
+  doc <- add_h2(doc, "五、ICCS 2022 公民態度：排名第 1 的兩種解讀")
+  n1 <- QII[CNT == "TWN" & rank_raw == 1, .N]; k1 <- QII[CNT == "TWN" & rank_ips == 1, .N]
+  doc <- add_body(doc, sprintf(
+    "臺灣學生在 %d 個公民態度量表中有 %d 個排名第 1、%d 個排名第 2。這個結果本身需要檢驗，因為它有兩種解讀：一是臺灣學生的公民態度確實普遍較正向；二是存在應答風格，即對李克特式的正向敘述較容易表示同意。單看原始分數無法區分兩者。臺灣在 %d 個量表上的整體平均為 %.2f，是 %d 個參與者中最高者，最低者為 %.2f。",
+    QD$meta$iccs$n_scale, n1, QII[CNT == "TWN" & rank_raw == 2, .N],
+    QD$meta$iccs$n_scale, QIR[CNT == "TWN"]$cmean, nrow(QIR), min(QIR$cmean)))
+  doc <- add_body(doc, sprintf(
+    "本研究採用的檢查為國內置中：將每個參與者的各量表分數減去該參與者在全部量表上的平均，只保留相對於自身的強弱。此一轉換消去整體作答傾向，代價是同時消去真實的整體差異，因此它是穩健性檢查而非更正確的答案。結果具有診斷力：臺灣有 %d 個量表在置中後仍居第 1，全部與學校生活直接相關（在校的公民學習經驗、對移民的正向態度、對同學互動的觀感、對師生關係的觀感）；而預期參與合法抗議、校外討論政治社會議題、預期積極政治參與、以數位媒體參與公共議題等四項，置中後全部落到第 %d，即最後一名。",
+    k1, nrow(QIR)))
+  doc <- add_figure(doc, fn, "iccsq_tw",
+    "ICCS 2022：臺灣學生公民態度量表與全體中位數之差",
+    sprintf("共 %d 個參與者。量表為試題反應理論量尺，國際平均 50、標準差 10。S_NISB（家庭社經地位指標）因在各參與者內部標準化，各國平均全距為 0.000，不具跨國比較意義，已排除。",
+            QD$meta$iccs$country)); fn <- fn + 1
+  doc <- add_figure(doc, fn, "iccsq_resp",
+    "各參與者在 30 個公民態度量表上的整體平均",
+    "此值反映的是整體作答傾向，而非任何單一態度的高低。全距達 5.6 分，代表在比較單一量表時，有一部分差異來自對正向敘述的同意傾向。"); fn <- fn + 1
+  doc <- add_figure(doc, fn, "iccsq_ips",
+    "扣除整體作答傾向前後，臺灣公民態度的名次變化",
+    "縱軸為名次，愈上方愈前面。與學校生活直接相關的四個量表在置中後仍居第 1，校外政治參與類則全部落到最後。兩種算法都不是唯一的真相，並列呈現才能框出結論的合理範圍。"); fn <- fn + 1
+
+  t13_ <- QII[CNT == "TWN"][order(rank_ips, rank_raw)][
+    , .(量表 = zh, 原始分數 = sprintf("%.1f", mean), 原始名次 = rank_raw,
+        置中後 = sprintf("%.1f", ips), 置中後名次 = rank_ips, 名次變動 = rank_ips - rank_raw)]
+  doc <- add_table(doc, 13, apa_table(t13_), "ICCS 2022 臺灣公民態度量表：原始名次與國內置中後名次",
+    "國內置中係將各量表分數減去該參與者在 30 個量表上的平均。名次變動為正代表置中後名次退後。依置中後名次排序。")
+
+  doc <- add_h2(doc, "六、ICCS 2016 至 2022 的變化")
+  twk <- QIK[CNT == "TWN"]; dn <- QIK[sig == TRUE & diff < 0, .N]
+  doc <- add_body(doc, sprintf(
+    "ICCS 2022 的 %d 個參與者中有 %d 個亦參加 2016 年。將兩輪並列後，臺灣 2022 年的第 1 名有了不同的意義：臺灣的變化為 %+.1f 分（SE = %.2f），未達統計顯著，屬持平；而 %d 個共同參與者中有 %d 個顯著下滑，最大者為挪威 %.1f 分與丹麥 %.1f 分。2016 年丹麥為 %.1f 分、臺灣 %.1f 分，丹麥在前；2022 年丹麥降至 %.1f 分，臺灣 %.1f 分。名次的變化主要來自其他參與者的下降，而非臺灣的上升。",
+    QD$meta$iccs$country, nrow(QIK), twk$diff, twk$sed, nrow(QIK), dn,
+    min(QIK$diff), QIK[CNT == "DNK"]$diff,
+    QIK[CNT == "DNK"]$y16, twk$y16, QIK[CNT == "DNK"]$y22, twk$y22))
+  doc <- add_figure(doc, fn, "iccsq_trend_know",
+    "ICCS 公民知識的變化：2016 至 2022",
+    "箭頭指向 2022 年。標準誤僅含兩輪各自的抽樣與推估變異，未納入跨輪連結誤差，故顯著性判定較為寬鬆，其影響見本節末段的說明。"); fn <- fn + 1
+  doc <- add_figure(doc, fn, "iccsq_trend_att",
+    "臺灣學生公民態度的變化：2016 至 2022",
+    sprintf("共 %d 個兩輪共通的量表。校內的公民參與與學習經驗上升，校外的政治參與意向下降。兩輪量尺是否完全等價未經本研究驗證，此圖僅供型態參考。",
+            QD$meta$iccs$trend_common)); fn <- fn + 1
+
+  t14_ <- QIK[order(-diff)][, .(`國家／經濟體` = ifelse(is.na(IEAN[CNT]), CNT, IEAN[CNT]),
+                               `2016` = sprintf("%.1f", y16), `2022` = sprintf("%.1f", y22),
+                               變化 = sprintf("%+.1f", diff), SE = sprintf("%.2f", sed),
+                               判定 = ifelse(sig, "顯著", "不顯著"))]
+  doc <- add_table(doc, 14, apa_table(t14_), "ICCS 公民知識 2016 至 2022 的變化",
+    "標準誤為兩輪標準誤的平方和開根號，未納入連結誤差。挪威與丹麥等大幅下降者的量級遠超過任何合理的連結誤差，結論不受影響；中間量級者應視為暫定。")
+
+  doc <- add_h2(doc, "七、量表方向與可比性的查核")
+  doc <- add_body(doc,
+    "問卷量表在使用前有兩項查核不可省略，兩者都不會產生任何錯誤訊息。")
+  doc <- add_body(doc,
+    "第一項是計分方向。「學生被霸凌」這個量表，分數高代表被霸凌得多還是少？從變數名稱看不出來，猜錯會使整個結論顛倒。本研究的作法是查對應的分類版各類別之連續分數平均：類別「幾乎從不」對應的量表平均為 11.75，「幾乎每週」為 6.90，可知高分代表較少被霸凌。同樣的檢查套用於每一個反向構念，結果一致：「數學課秩序混亂」的類別「很少或沒有」對應最高分 13.17，「教學受資源短缺影響」的類別「未受影響」對應最高分 12.62。結論是 IEA 的合成量表一律將高分設為較有利的一端。本研究因此將全部中文標籤改寫為正向說法，使圖表中「往右代表較有利」在每一列均成立。")
+  doc <- add_body(doc,
+    "第二項是跨國可比性。若某量表的各國加權平均全距趨近於零，代表該量表已在各參與者內部標準化，比較其平均數等同於比較捨入誤差。本研究對每一個量表均執行此項檢查，並以此攔下 ICCS 的 S_NISB（全距 0.000）。此一檢查的必要性在 TALIS 2018 的資料上已有實例，詳見本報告第拾節。")
+
+  doc <- body_add_break(doc)
+
+  # ---------- 拾、TALIS ----------
+  doc <- add_h1(doc, "拾、教師與校長調查結果（TALIS）")
   doc <- add_h2(doc, "一、資料與估計方法")
   doc <- add_body(doc, sprintf(
     "教學與學習國際調查（Teaching and Learning International Survey, TALIS）由 OECD 主辦，調查對象為國中階段的教師與校長，而非學生。TALIS 不施測學業成就，因此不產生合理推估值，量表分數由題項直接合成。變異數以 Fay 平衡重複半樣本法估計，重複權重為 %d 組（PISA 為 80 組），Fay 係數 k = 0.5。",
@@ -699,7 +849,7 @@ build_report <- function() {
   tinv <- TLINV[order(range)][, .(
     量表 = v, 不變性 = ifelse(不變性 == "" | is.na(不變性), "未標示", 不變性),
     全距 = sprintf("%.3f", range), 相異值數 = distinct, 參與者數 = n_country)]
-  doc <- add_table(doc, 11, apa_table(head(tinv, 20)),
+  doc <- add_table(doc, 15, apa_table(head(tinv, 20)),
     "TALIS 2018 校長量表的測量不變性層級與實際跨國變異",
     "依全距由小至大排序，列出前 20 個量表。全距為各參與者加權平均的最大值減最小值。全距趨近於零者，係因 TALIS 於各參與者內部中心化，其平均數不具跨國比較意義。相異值數為四捨五入至小數點後三位後的相異平均數個數。")
 
@@ -721,14 +871,14 @@ build_report <- function() {
     指標 = tw18$zh, 臺灣 = sprintf("%.2f", tw18$mean), SE = sprintf("%.3f", tw18$se),
     名次 = tw18$rank, 參與者數 = tw18$ntot,
     `百分位 %` = sprintf("%.1f", 100 * (1 - (tw18$rank - 1) / tw18$ntot)))
-  doc <- add_table(doc, 12, apa_table(t11), "TALIS 2018 臺灣校長各指標估計值與國際位置",
+  doc <- add_table(doc, 16, apa_table(t11), "TALIS 2018 臺灣校長各指標估計值與國際位置",
     sprintf("標準誤以 Fay 平衡重複半樣本法估計，%d 組重複權重，Fay 係數 k = 0.5，權重為 SCHWGT 與 SRWGT1 至 SRWGT%d。名次依分數由高至低排列；資源短缺類量表分數越高代表短缺越嚴重，故該類名次越後代表狀況越佳。",
             TAL$meta$G, TAL$meta$G))
 
   doc <- body_add_break(doc)
 
-  # ---------- 拾、結論與限制 ----------
-  doc <- add_h1(doc, "拾、結論與研究限制")
+  # ---------- 拾壹、結論與限制 ----------
+  doc <- add_h1(doc, "拾壹、結論與研究限制")
   doc <- add_h2(doc, "一、主要發現")
   doc <- add_body(doc, sprintf(
     "第一，臺灣學生在兩套國際評比中均居前列，惟兩者測量的構念不同。PISA 2022 數學排名第 %d、科學第 %d、閱讀第 %d；TIMSS 2023 八年級數學與科學均排名第 2。前者測應用素養，後者測課程本位的學習成果，兩項評比在 %d 個共同參與的經濟體間相關達 %.3f，臺灣在兩者皆表現優異，顯示課程實施與素養轉化均有成效。",

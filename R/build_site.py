@@ -99,6 +99,40 @@ DL_JS_PAGES = """
 /* GitHub Pages 版本以一般超連結提供報告，此處不需 JavaScript。 */"""
 
 
+# template.html 是給 Artifact 用的片段——Artifact 在發布時會補上
+# <!doctype html><head>…</head><body> 的外框，所以樣板本身不含這些標籤。
+# Pages 版是直接輸出成 index.html 的一般網頁，必須自己補上骨架，
+# 尤其是 <meta charset>：少了它，頁面就只能倚賴伺服器送的 Content-Type 標頭，
+# 使用者一旦把檔案存到本機開啟，中文會整片變成亂碼。
+PAGES_SHELL = """<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="PISA、TIMSS、PIRLS、ICCS 與 TALIS 的整合分析平台：複雜抽樣加權估計、問卷分析與跨評比對照。">
+{head}
+</head>
+<body>
+{body}
+</body>
+</html>
+"""
+
+
+def wrap_pages(html):
+    """把 <title> 與字型連結移進 <head>，其餘留在 <body>。"""
+    head, body, seen = [], [], False
+    for line in html.split("\n"):
+        t = line.strip()
+        if not seen and (t.startswith("<title") or t.startswith("<link rel=")):
+            head.append(line)
+        else:
+            if t and not t.startswith("<link rel="):
+                seen = True
+            body.append(line)
+    return PAGES_SHELL.format(head="\n".join(head), body="\n".join(body).strip())
+
+
 # ---------------------------------------------------------------- 組裝
 def build(target):
     html = (ROOT / "template.html").read_text()
@@ -148,11 +182,17 @@ def build(target):
                   lambda _: (ROOT / "iea_data.json").read_text(), html, flags=re.S)
     html = re.sub(r"/\*__TALIS_DATA__\*/.*?/\*__END__\*/",
                   lambda _: (ROOT / "talis_data.json").read_text(), html, flags=re.S)
+    html = re.sub(r"/\*__Q_DATA__\*/.*?/\*__END__\*/",
+                  lambda _: (ROOT / "q_data.json").read_text(), html, flags=re.S)
 
     left = re.findall(r"<!--(?:FIG|FIGSET|DLBLOCK):[^>]+-->", html)
     left += re.findall(r"/\*__[A-Z_]+__\*/", html)
     if left:
         raise SystemExit(f"仍有未填的佔位符：{left}")
+
+    if target == "pages":
+        html = wrap_pages(html)
+        print("  SHELL  已補上 <!doctype>、<meta charset=utf-8> 與 viewport")
 
     out.write_text(html)
     print(f"\n寫出 {out}  {len(html)/2**20:.2f} MB")
