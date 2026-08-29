@@ -941,13 +941,13 @@ footer .fl { display:flex; flex-wrap:wrap; gap:6px 24px; }
       <figure>
         <div class="figbox"><!--FIG:talis_selfeff--></div>
         <div class="rcredit"><span class="dot"></span>R · ggplot2 · Fay BRR 100 組重複權重</div>
-        <figcaption>日本教師的自我效能感 7.14 為 55 個參與者中最低，且與第二低者有明顯差距。東亞四地（日本、韓國、新加坡、越南）中，越南反而偏高。</figcaption>
+        <figcaption>日本教師的自我效能感 7.14 為 55 個參與單位中最低，且與第二低者有明顯差距。五個東亞參與單位（日本、韓國、新加坡、越南、上海）中，<strong>上海 10.78 與越南 10.73 反而最高</strong>，與日本相差逾 3.6 個量表分——東亞內部的差距大於區域間。</figcaption>
       </figure>
 
       <figure>
         <div class="figbox"><!--FIG:talis_scatter--></div>
         <div class="rcredit"><span class="dot"></span>R · ggplot2 · 國家層級對照</div>
-        <figcaption>自我效能感與工作滿意度高度相關，但日本、韓國、新加坡系統性地落在左下角——學生成就名列前茅的體制，教師的效能感與滿意度反而偏低。</figcaption>
+        <figcaption>自我效能感與工作滿意度高度相關。日本與韓國落在左下角，但同屬東亞的上海與越南落在右上角——「東亞教師效能感偏低」這個印象只對其中一部分成立。</figcaption>
       </figure>
 
       <figure>
@@ -1002,6 +1002,7 @@ footer .fl { display:flex; flex-wrap:wrap; gap:6px 24px; }
       <div class="eyebrow">OECD · TALIS 2024 教師問卷</div>
       <h2>教師與人工智慧</h2>
       <p class="lead">「哪一個大型數據有 AI 問卷？」本平台把手上五套評比的變數字典逐一搜過，答案是<strong>只有 TALIS 2024 的教師問卷</strong>——28 個題目，涵蓋使用經驗、用途、不使用的原因、對助益與風險的信念，以及專業發展。校長問卷沒有，其餘四套評比也沒有。</p>
+      <p class="lead" style="margin-top:14px">跨單位的中位數與計數一律以 <strong>53 個不重複計算的單位</strong>為基礎：TALIS 的參與單位不全是主權國家，比利時同時以整體與兩個語言社群出現，三者樣本重疊（比利時整體 1,663 人＝荷語區 798＋法語區 865），逐單位的長條圖仍列出全部 55 個以利與官方報告對照。</p>
       <div class="tiles" id="aiTiles" style="margin:22px 0 26px"></div>
 
       <div class="warnbox">
@@ -1021,13 +1022,13 @@ footer .fl { display:flex; flex-wrap:wrap; gap:6px 24px; }
       <figure>
         <div class="figbox"><!--FIG:ai_usage--></div>
         <div class="rcredit"><span class="dot"></span>R · ggplot2 · Fay BRR 100 組重複權重</div>
-        <figcaption>過去 12 個月使用過 AI 的國中教師比率，國際中位數 <strong>39.7%</strong>。最高為阿聯 75.0%、新加坡 74.9%，最低為法國 13.5%、<strong>日本 17.4%（倒數第 2）</strong>。東亞四個參與者的落差極大：新加坡 74.9%、越南 64.5%、韓國 42.7%、日本 17.4%——同一區域相差 57 個百分點，「東亞」不是一個有意義的分析單位。</figcaption>
+        <figcaption>過去 12 個月使用過 AI 的國中教師比率，跨單位中位數 <strong>42.2%</strong>。最高為阿聯 75.0%、新加坡 74.9%，最低為法國 13.5%、<strong>日本 17.4%（倒數第 2）</strong>。五個東亞參與單位的落差極大：新加坡 74.9%、越南 64.5%、上海（中國）53.5%、韓國 42.7%、日本 17.4%——同一區域相差 57.5 個百分點，跨越了整個分布的絕大部分，「東亞」不是一個有意義的分析單位。</figcaption>
       </figure>
 
       <figure>
         <div class="figbox"><!--FIG:ai_use_what--></div>
         <div class="rcredit"><span class="dot"></span>R · ggplot2 · 分母為全體教師</div>
-        <figcaption>用得最多的是<strong>備課</strong>：快速了解與摘要主題 25.9%、產生教案或教學活動 25.3%。用得最少的是<strong>評閱或批改學生作業 9.8%</strong>。教師把 AI 放在自己的準備工作上，而不是放在對學生的評量判斷上——這個取捨在 55 個參與者中相當一致。</figcaption>
+        <figcaption>用得最多的是<strong>備課</strong>：快速了解與摘要主題 26.1%、產生教案或教學活動 25.4%。用得最少的是<strong>評閱或批改學生作業 9.9%</strong>。教師把 AI 放在自己的準備工作上，而不是放在對學生的評量判斷上——這個取捨在 55 個參與者中相當一致。</figcaption>
       </figure>
 
       <figure>
@@ -1043,15 +1044,21 @@ footer .fl { display:flex; flex-wrap:wrap; gap:6px 24px; }
       </figure>
 
       <figure>
+        <div class="figbox"><!--FIG:ai_rankorder--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · Kendall 和諧係數</div>
+        <figcaption>各體制不只用得多寡不同——先後順序也大致相同。把每個單位內部的九項用途各自排名後比較，<strong>Kendall 和諧係數 W = 0.651</strong>（χ²(8) = 276.0，p &lt; .001；排除「其他用途」後 0.704）。最決定性的是：<strong>備課兩項的最佳名次在 53 個單位中全數優於評量兩項，例外為零</strong>。產生教案 53／53 落在前三名，批改作業 45／53 落在後三名。「協助學生在真實情境中練習」優於評量兩項者 48／53（91%）——教師限制的不是 AI 接觸學生，而是由它判斷學生。</figcaption>
+      </figure>
+
+      <figure>
         <div class="figbox"><!--FIG:ai_why_not--></div>
         <div class="rcredit"><span class="dot"></span>R · ggplot2 · 分母為未使用 AI 的教師</div>
-        <figcaption>沒用 AI 的教師中，<strong>69.5% 說自己沒有相關知識與技能</strong>，遠高於學校缺乏基礎設施 39.1% 與學校不允許 11.6%。真正卡住的是能力，不是設備，也不是禁令。另有 45.9% 是「不認為應該使用」——這是價值判斷而非能力問題，兩者需要不同的政策工具。</figcaption>
+        <figcaption>沒用 AI 的教師中，<strong>69.3% 說自己沒有相關知識與技能</strong>，遠高於學校缺乏基礎設施 39.2% 與學校不允許 12.1%。真正卡住的是能力，不是設備，也不是禁令。另有 45.9% 是「不認為應該使用」——這是價值判斷而非能力問題，兩者需要不同的政策工具。</figcaption>
       </figure>
 
       <figure>
         <div class="figbox"><!--FIG:ai_pd_gap--></div>
         <div class="rcredit"><span class="dot"></span>R · ggplot2 · 兩題分屬不同輪換題本，僅可作國家層次比較</div>
-        <figcaption>專業發展已包含 AI 的教師中位數 42.3%，但對 AI 技能有中度以上需求者中位數 <strong>64.5%</strong>。<strong>55 個參與者中有 53 個需求高於供給</strong>，僅阿聯與斯洛維尼亞例外。落差最大者為摩洛哥 +61.3、葡萄牙 +49.2、丹麥 +45.8、日本 +43.1 個百分點。把這張圖和上一張並讀：教師說自己缺的是技能，而技能培訓的供給普遍跟不上。</figcaption>
+        <figcaption>專業發展已包含 AI 的教師中位數 44.1%，但對 AI 技能有中度以上需求者中位數 <strong>66.7%</strong>。<strong>53 個單位中有 51 個需求高於供給</strong>，僅阿聯與斯洛維尼亞例外。落差最大者為摩洛哥 +61.3、葡萄牙 +49.2、丹麥 +45.8、日本 +43.1 個百分點。把這張圖和上一張並讀：教師說自己缺的是技能，而技能培訓的供給普遍跟不上。</figcaption>
       </figure>
     </div>
 
@@ -1073,6 +1080,7 @@ footer .fl { display:flex; flex-wrap:wrap; gap:6px 24px; }
         <p>AI 模組的有效作答只有 <strong>62,763 人／194,521 人（32.3%）</strong>。這個數字乍看像嚴重的無回應，實際上是<strong>輪換題本設計</strong>：55 個參與者全部施測，但每位教師只拿到三份題本之一，AI 模組落在其中一份。各國的作答比率一致落在 0.289 至 0.334 之間，正是三分之一。</p>
         <p>判斷依據不只是比率整齊。答題者與未答題者的<strong>平均權重為 28.18 與 28.11</strong>，幾乎相同，確認分派與教師特徵無關。因此沿用 <code>TCHWGT</code> 即為母體的不偏估計，代價只是有效樣本約為三分之一、標準誤較大。若誤把它當成無回應而去做加權調整，反而會引入偏誤。</p>
         <p><strong>三種題目的分母不同，混用會得到無法解釋的數字。</strong>「是否使用過 AI」的分母是全體作答者；「用 AI 做什麼」只有使用者作答，本平台換算成全體教師的比率（未使用者計為 0），因此各項可直接相互比較；「不使用的原因」只有未使用者作答，分母即為未使用者，且可複選，各項合計超過 100%。</p>
+        <p><strong>參與單位不全是主權國家。</strong>比利時同時以整體與兩個語言社群出現於資料庫，三者的樣本重疊——比利時整體的模組作答為 1,663 人，荷語區 798 加法語區 865 亦為 1,663，同一批教師被計入兩次。本頁的中位數、全距與計數因此一律以 53 個不重複計算的單位為基礎（保留比利時整體、排除兩個語言社群），逐單位的長條圖與表格則仍列出全部 55 個，以利與官方報告對照。上海（中國）、加拿大亞伯達省與比利時兩個語言社群屬次國家層級的參與實體，與主權國家並列比較本身仍有其限制。</p>
         <p>還有一個資料設計上的限制：<strong>「已接受的專業發展含 AI」與「對 AI 技能的需求」落在不同的輪換題本上，兩者的個體層次重疊為 0</strong>。這代表無法回答「想學 AI 的人是不是正在用 AI」這類問題——不是本平台沒做，是資料設計上就答不了。上方那張供需圖是國家層次的兩個比率並列，不是個體層次的交叉。</p>
         <p>最後，AI 模組<strong>沒有官方的合成量表</strong>。本平台因此一律以是非題的加權比率呈現，不自行建構李克特平均——理由見 ICCS 那一頁關於作答風格的討論：自建量表分數要面對跨國可比性的問題，而比率的分母講得清楚、也相對穩健。</p>
       </div>
@@ -1452,7 +1460,7 @@ const TAB_CTX = {
   ai: {
     d: 'TALIS 2024 教師問卷的 AI 題組，<span class="n">28</span> 題 × <span class="n">55</span> 個參與者、<span class="n">6.3 萬</span>名教師',
     q: '哪一個大型數據有 AI 問卷？教師實際用了嗎、怎麼用、卡在哪裡？',
-    f: '<em>只有 TALIS 2024 教師問卷有</em>；使用率中位數 39.7%，日本 17.4% 倒數第 2，臺灣未參加'},
+    f: '<em>只有 TALIS 2024 教師問卷有</em>；使用率中位數 42.2%，各單位內部排序高度一致（W = 0.651）'},
   cross: {
     d: '五套評比十個項目的對照，以及各資料庫的設計差異',
     q: '換一套主辦單位、換一種測驗取向，結論會一樣嗎？',
@@ -1488,7 +1496,7 @@ const DATASETS = [
   {ds:'ai', org:'OECD', nm:'AI 專區', sub:'TALIS 2024 教師問卷的人工智慧題組',
    rows:[['題數','28 題'],['教師','6.3 萬名'],['參與','55 個']],
    rows2:null,
-   res:'五套評比中<b>唯一有 AI 問卷</b>者；使用率中位數 39.7%，<b>臺灣未參加</b>'}
+   res:'五套評比中<b>唯一有 AI 問卷</b>者；使用率中位數 42.2%，<b>臺灣未參加</b>'}
 ];
 
 let curDS = 'all';
@@ -2235,14 +2243,15 @@ function initAi() {
 }
 function drawAi() {
   const m = AID.meta, U = arr(AID.usage);
-  const med = U.length ? U.map(r => r.pct).sort((a,b) => a-b)[Math.floor(U.length/2)] : null;
+  const med = m.use_median;          // 53 個不重複計算單位的中位數
   const jp = U.find(r => r.CNT === 'JPN') || {}, sg = U.find(r => r.CNT === 'SGP') || {};
+  const R = AID.rankorder || {};
   tiles('#aiTiles', [
-    ['參與者', m.n_country, 'TALIS 2024 · 不含臺灣'],
+    ['參與單位', m.n_country + '／' + m.n_dedup, '全部／不重複計算'],
     ['AI 模組樣本', (m.n_teacher/10000).toFixed(1) + ' 萬', '全體教師 ' + (m.n_teacher_full/10000).toFixed(1) + ' 萬的三分之一'],
     ['AI 題數', m.n_item, '使用、用途、信念、專業發展'],
-    ['使用率中位數', fmt(med, 1) + '%', '過去 12 個月'],
-    ['東亞落差', fmt(sg.pct - jp.pct, 1) + ' 個百分點', '新加坡 ' + fmt(sg.pct,1) + '% vs 日本 ' + fmt(jp.pct,1) + '%']
+    ['使用率中位數', fmt(med, 1) + '%', '53 個不重複計算的單位'],
+    ['排序一致性', 'W = ' + fmt(R.W, 3), '備課優於評量 ' + R.best_order + '／' + R.n_unit + ' 無例外']
   ]);
   const rows = aiRows().filter(r => r.idx === aiIdx).slice().sort((a,b) => b.pct - a.pct);
   const lab = (rows[0] || {}).zh || aiIdx || '';

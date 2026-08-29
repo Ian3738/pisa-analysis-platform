@@ -43,6 +43,14 @@ AI_ZH <- c(
   TT4G38C = "不認為應該使用 AI",            TT4G38D = "學校不允許",
   TT4G38E = "對整合新科技感到吃不消",       TT4G38F = "其他原因",
   TT4G21G = "已接受的專業發展含 AI",        TT4G24G = "對 AI 技能有中度以上需求")
+# TALIS 的參與單位不全是主權國家，比利時同時以整體（BEL）與兩個語言社群
+# （BFL 荷語區、BFR 法語區）出現，三者的樣本重疊：BEL 的模組作答為 1,663 人，
+# BFL 798 + BFR 865 亦為 1,663，同一批教師被計入兩次。逐單位的估計值仍全部
+# 保留以利與官方報告對照，但中位數、全距與計數等跨單位統計量一律以 53 個
+# 不重複計算的單位為基礎，作法是保留比利時整體、排除兩個語言社群。
+TALIS_DUP <- c("BFL", "BFR")
+dedup <- function(d) d[!CNTRY %in% TALIS_DUP]
+
 POS5 <- paste0("TT4G35", LETTERS[1:5])   # 正向信念
 NEG5 <- paste0("TT4G35", LETTERS[6:10])  # 風險認知
 USE9 <- paste0("TT4G37", LETTERS[1:9])
@@ -114,7 +122,8 @@ analyse_ai <- function(rds = "~/TALIS/parquet/ai_2024.parquet") {
                   pct_by(pd, "pd_need", "專業發展")[, `:=`(idx="TT4G24G", zh=AI_ZH["TT4G24G"])][])
 
   out$meta <- list(n_teacher = nrow(d), n_country = uniqueN(d$CNTRY),
-                   n_teacher_full = nrow(pd),
+                   n_country_dedup = uniqueN(d$CNTRY) - length(TALIS_DUP),
+                   dup = TALIS_DUP, n_teacher_full = nrow(pd),
                    n_item = length(c(POS5, NEG5, USE9, WHY6)) + 3L,
                    taiwan = "TWN" %in% d$CNTRY)
   saveRDS(out, path.expand("~/TALIS/output/ai_2024.rds"))

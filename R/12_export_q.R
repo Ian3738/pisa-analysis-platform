@@ -96,15 +96,34 @@ export_ai <- function() {
                              pct = round(100 * estimate, 2), se = round(100 * se, 3),
                              rank, ntot, n)]
   }
+  # 比利時的兩個語言社群與比利時整體樣本重疊，逐單位的數值全部保留，
+  # 但中位數與計數等跨單位統計量一律以不重複計算的單位為基礎。
+  DUP <- c("BFL", "BFR"); dd <- function(d) d[!CNT %in% DUP & !CNTRY %in% DUP]
+  ddc <- function(d) d[!CNTRY %in% DUP]
   B <- A$belief
-  pos <- B[grp == "正向信念", .(pos = round(100 * mean(estimate), 2)), by = CNTRY]
-  neg <- B[grp == "風險認知", .(neg = round(100 * mean(estimate), 2)), by = CNTRY]
-  P <- dcast(A$pd[is.finite(estimate)], CNTRY ~ idx, value.var = c("estimate", "se"))
+  pos <- ddc(B)[grp == "正向信念", .(pos = round(100 * mean(estimate), 2)), by = CNTRY]
+  neg <- ddc(B)[grp == "風險認知", .(neg = round(100 * mean(estimate), 2)), by = CNTRY]
+  P <- dcast(ddc(A$pd[is.finite(estimate)]), CNTRY ~ idx, value.var = c("estimate", "se"))
   setnames(P, c("estimate_TT4G21G","estimate_TT4G24G","se_TT4G21G","se_TT4G24G"),
               c("got","need","got_se","need_se"))
 
+  # 跨單位的中位數（53 個不重複計算的單位）
+  med53 <- function(x) x[, .(pct = round(100 * median(estimate), 2)), by = .(idx, zh, grp)]
+  source("~/PISA/R/14_figure_rankorder.R")
+  RS <- rankorder_stats()
+
   out <- list(
-    meta = c(A$meta, list(cycle = 2024L)),
+    meta = c(A$meta, list(cycle = 2024L, n_dedup = uniqueN(ddc(A$usage)$CNTRY),
+                          use_median = round(100 * median(ddc(A$usage)$estimate), 2))),
+    median53 = rbind(med53(ddc(A$use)), med53(ddc(A$why)), med53(ddc(A$belief)),
+                     med53(ddc(A$pd))),
+    rankorder = list(
+      W = round(RS$K$W, 3), chi = round(RS$K$chi, 1), df = RS$K$df, W8 = round(RS$K8$W, 3),
+      n_unit = RS$n_unit, prep_top3 = RS$prep_top3, asse_bot3 = RS$asse_bot3,
+      best_order = RS$best_order, all_order = RS$all_order, practice = RS$practice,
+      exceptions = RS$exceptions, rho_med = round(RS$rho_med, 2),
+      tab = RS$tab[, .(zh, grp, med = 中位數, iqr = 四分位距, rng = 全距,
+                       top3 = 前三名, bot3 = 後三名, pct = 比率)]),
     usage  = tidy(A$usage),  use = tidy(A$use),   why = tidy(A$why),
     belief = tidy(A$belief), dontknow = tidy(A$dontknow), pd = tidy(A$pd),
     summary = merge(merge(pos, neg, by = "CNTRY", all = TRUE),

@@ -83,7 +83,7 @@
 <rect x='91.51' y='174.51' width='274.32' height='6.63' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #2A78D6;' />
 <rect x='91.51' y='165.29' width='275.89' height='6.63' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #2A78D6;' />
 <rect x='91.51' y='156.08' width='278.34' height='6.63' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #2A78D6;' />
-<rect x='91.51' y='146.87' width='282.26' height='6.63' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #2A78D6;' />
+<rect x='91.51' y='146.87' width='282.26' height='6.63' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #0E5F57;' />
 <rect x='91.51' y='137.65' width='291.99' height='6.63' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #2A78D6;' />
 <rect x='91.51' y='128.44' width='296.01' height='6.63' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #2A78D6;' />
 <rect x='91.51' y='119.22' width='309.12' height='6.63' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #2A78D6;' />
@@ -275,9 +275,9 @@
 <text x='407.94' y='566.00' text-anchor='middle' style='font-size: 9.00px;fill: #7A8783; font-family: "PingFang HK";' textLength='19.55px' lengthAdjust='spacingAndGlyphs'>60%</text>
 <text x='513.41' y='566.00' text-anchor='middle' style='font-size: 9.00px;fill: #7A8783; font-family: "PingFang HK";' textLength='19.55px' lengthAdjust='spacingAndGlyphs'>80%</text>
 <text x='302.81' y='577.44' text-anchor='middle' style='font-size: 9.50px;fill: #46524E; font-family: "PingFang HK";' textLength='90.80px' lengthAdjust='spacingAndGlyphs'>使用過 AI 的教師比率</text>
-<text x='70.38' y='31.33' style='font-size: 9.50px;fill: #7A8783; font-family: "PingFang HK";' textLength='302.42px' lengthAdjust='spacingAndGlyphs'>TALIS 2024，55 個參與者。橫線為 95% 信賴區間；橘色為東亞參與者</text>
+<text x='70.38' y='31.33' style='font-size: 9.50px;fill: #7A8783; font-family: "PingFang HK";' textLength='343.58px' lengthAdjust='spacingAndGlyphs'>TALIS 2024，全部 55 個參與單位。橫線為 95% 信賴區間；橘色為東亞參與單位</text>
 <text x='70.38' y='18.89' style='font-size: 12.50px;fill: #111917; font-family: "PingFang HK";' textLength='215.33px' lengthAdjust='spacingAndGlyphs'>過去 12 個月使用過 AI 的國中教師比率</text>
-<text x='70.38' y='595.13' style='font-size: 8.00px;fill: #7A8783; font-family: "PingFang HK";' textLength='258.81px' lengthAdjust='spacingAndGlyphs'>分母為 AI 模組的全體作答教師。臺灣未參加 TALIS 2024，故無臺灣數值</text>
+<text x='70.38' y='595.13' style='font-size: 8.00px;fill: #7A8783; font-family: "PingFang HK";' textLength='537.72px' lengthAdjust='spacingAndGlyphs'>分母為 AI 模組的全體作答教師。文中的中位數以 53 個不重複計算的單位為基礎（比利時的兩個語言社群與比利時整體重疊）。臺灣未參加 TALIS 2024</text>
 </g>
 </g>
 </svg>
