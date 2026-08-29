@@ -128,6 +128,8 @@ a { color:var(--accent); text-underline-offset:2px; }
                                 color:var(--paper); font-weight:500; }
 .ds-chip .cnt { font-family:var(--mono); font-size:.68rem; opacity:.7; }
 .tab.hidden { display:none; }
+.tcap { caption-side:top; text-align:left; font-size:.74rem; color:var(--ink-3);
+        padding-bottom:7px; font-family:var(--mono); }
 
 /* ---------- 入口卡片 ---------- */
 .dscards { display:grid; grid-template-columns:repeat(auto-fit, minmax(268px,1fr)); gap:1px;
@@ -993,6 +995,99 @@ footer .fl { display:flex; flex-wrap:wrap; gap:6px 24px; }
     </div>
   </section>
 
+
+  <!-- ============ AI 專區 ============ -->
+  <section class="panel" id="p-ai" role="tabpanel" aria-labelledby="t-ai">
+    <div class="sec">
+      <div class="eyebrow">OECD · TALIS 2024 教師問卷</div>
+      <h2>教師與人工智慧</h2>
+      <p class="lead">「哪一個大型數據有 AI 問卷？」本平台把手上五套評比的變數字典逐一搜過，答案是<strong>只有 TALIS 2024 的教師問卷</strong>——28 個題目，涵蓋使用經驗、用途、不使用的原因、對助益與風險的信念，以及專業發展。校長問卷沒有，其餘四套評比也沒有。</p>
+      <div class="tiles" id="aiTiles" style="margin:22px 0 26px"></div>
+
+      <div class="warnbox">
+        <h3>臺灣未參加 TALIS 2024</h3>
+        <p>這代表在目前唯一一份跨國、具代表性抽樣的教師 AI 使用資料裡，<strong>沒有臺灣</strong>。以下全部為國際脈絡。臺灣參加的是 TALIS 2018，該輪早於生成式 AI 普及，問卷中沒有任何 AI 題目（僅 11 題 ICT）。</p>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="eyebrow">資料盤點</div>
+      <h2>五套評比逐一搜過的結果</h2>
+      <div class="tablewrap"><table id="aiInvTable"></table></div>
+      <p class="note">搜尋字串為 <code>artificial intelligence</code>、<code>AI</code>、<code>chatbot</code>、<code>machine learning</code>、<code>generative</code>、<code>ChatGPT</code>、<code>large language</code>，比對範圍是各檔案的完整變數標籤，不是變數名稱。ICT 欄為對照組，用來確認搜尋本身有效——PISA 2022 學生問卷有 136 題 ICT 但 0 題 AI，不是搜尋失靈，是題目確實不存在。</p>
+    </div>
+
+    <div class="stack">
+      <figure>
+        <div class="figbox"><!--FIG:ai_usage--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · Fay BRR 100 組重複權重</div>
+        <figcaption>過去 12 個月使用過 AI 的國中教師比率，國際中位數 <strong>39.7%</strong>。最高為阿聯 75.0%、新加坡 74.9%，最低為法國 13.5%、<strong>日本 17.4%（倒數第 2）</strong>。東亞四個參與者的落差極大：新加坡 74.9%、越南 64.5%、韓國 42.7%、日本 17.4%——同一區域相差 57 個百分點，「東亞」不是一個有意義的分析單位。</figcaption>
+      </figure>
+
+      <figure>
+        <div class="figbox"><!--FIG:ai_use_what--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 分母為全體教師</div>
+        <figcaption>用得最多的是<strong>備課</strong>：快速了解與摘要主題 25.9%、產生教案或教學活動 25.3%。用得最少的是<strong>評閱或批改學生作業 9.8%</strong>。教師把 AI 放在自己的準備工作上，而不是放在對學生的評量判斷上——這個取捨在 55 個參與者中相當一致。</figcaption>
+      </figure>
+
+      <figure>
+        <div class="figbox"><!--FIG:ai_belief--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 同意率已排除「不知道」</div>
+        <figcaption>同意率最高的兩題都是風險：<strong>讓學生把他人作品冒充為己作 85.1%、做出不當或錯誤的建議 85.0%</strong>；助益類最高的是支援特殊教育需求學生 76.7%。值得注意的是「不知道」的比率：中位數 23.9%，北歐尤其高（瑞典 46.9%、丹麥 44.0%、芬蘭 43.4%）。在這些體制裡，將近一半的教師對 AI 的效果還沒有形成判斷。</figcaption>
+      </figure>
+
+      <figure>
+        <div class="figbox"><!--FIG:ai_use_belief--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 國家層級對照</div>
+        <figcaption>正向信念與使用率高度相關（r = 0.67），但<strong>正向信念與風險認知之間幾乎無關（r = −0.19）</strong>。這代表「看見助益」與「看見風險」不是同一條軸的兩端：一個教師可以同時認為 AI 幫得上忙、也認為它會助長抄襲。把兩者當成單一「AI 態度」變項處理會抹掉這個結構。</figcaption>
+      </figure>
+
+      <figure>
+        <div class="figbox"><!--FIG:ai_why_not--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 分母為未使用 AI 的教師</div>
+        <figcaption>沒用 AI 的教師中，<strong>69.5% 說自己沒有相關知識與技能</strong>，遠高於學校缺乏基礎設施 39.1% 與學校不允許 11.6%。真正卡住的是能力，不是設備，也不是禁令。另有 45.9% 是「不認為應該使用」——這是價值判斷而非能力問題，兩者需要不同的政策工具。</figcaption>
+      </figure>
+
+      <figure>
+        <div class="figbox"><!--FIG:ai_pd_gap--></div>
+        <div class="rcredit"><span class="dot"></span>R · ggplot2 · 兩題分屬不同輪換題本，僅可作國家層次比較</div>
+        <figcaption>專業發展已包含 AI 的教師中位數 42.3%，但對 AI 技能有中度以上需求者中位數 <strong>64.5%</strong>。<strong>55 個參與者中有 53 個需求高於供給</strong>，僅阿聯與斯洛維尼亞例外。落差最大者為摩洛哥 +61.3、葡萄牙 +49.2、丹麥 +45.8、日本 +43.1 個百分點。把這張圖和上一張並讀：教師說自己缺的是技能，而技能培訓的供給普遍跟不上。</figcaption>
+      </figure>
+    </div>
+
+    <div class="sec">
+      <h2>各參與者數值</h2>
+      <div class="controls">
+        <div class="ctl-group"><span class="ctl-label">題組</span>
+          <div class="seg" id="aiGrp" role="group" aria-label="選擇題組"></div></div>
+        <div class="ctl-group"><span class="ctl-label">題目</span>
+          <div class="seg" id="aiIdx" role="group" aria-label="選擇題目"></div></div>
+      </div>
+      <div class="tablewrap"><table id="aiTable"></table></div>
+    </div>
+
+    <div class="sec">
+      <div class="eyebrow">方法註記</div>
+      <h2>三分之一的教師沒答，這不是缺失</h2>
+      <div class="prose">
+        <p>AI 模組的有效作答只有 <strong>62,763 人／194,521 人（32.3%）</strong>。這個數字乍看像嚴重的無回應，實際上是<strong>輪換題本設計</strong>：55 個參與者全部施測，但每位教師只拿到三份題本之一，AI 模組落在其中一份。各國的作答比率一致落在 0.289 至 0.334 之間，正是三分之一。</p>
+        <p>判斷依據不只是比率整齊。答題者與未答題者的<strong>平均權重為 28.18 與 28.11</strong>，幾乎相同，確認分派與教師特徵無關。因此沿用 <code>TCHWGT</code> 即為母體的不偏估計，代價只是有效樣本約為三分之一、標準誤較大。若誤把它當成無回應而去做加權調整，反而會引入偏誤。</p>
+        <p><strong>三種題目的分母不同，混用會得到無法解釋的數字。</strong>「是否使用過 AI」的分母是全體作答者；「用 AI 做什麼」只有使用者作答，本平台換算成全體教師的比率（未使用者計為 0），因此各項可直接相互比較；「不使用的原因」只有未使用者作答，分母即為未使用者，且可複選，各項合計超過 100%。</p>
+        <p>還有一個資料設計上的限制：<strong>「已接受的專業發展含 AI」與「對 AI 技能的需求」落在不同的輪換題本上，兩者的個體層次重疊為 0</strong>。這代表無法回答「想學 AI 的人是不是正在用 AI」這類問題——不是本平台沒做，是資料設計上就答不了。上方那張供需圖是國家層次的兩個比率並列，不是個體層次的交叉。</p>
+        <p>最後，AI 模組<strong>沒有官方的合成量表</strong>。本平台因此一律以是非題的加權比率呈現，不自行建構李克特平均——理由見 ICCS 那一頁關於作答風格的討論：自建量表分數要面對跨國可比性的問題，而比率的分母講得清楚、也相對穩健。</p>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="eyebrow">尚未納入</div>
+      <h2>還有兩個來源，一個現有、一個未來</h2>
+      <div class="prose">
+        <p><strong>ICILS 2023</strong>（IEA 國際電腦與資訊素養調查）在<strong>校長問卷</strong>中加了一組生成式 AI 的選答題。但這組題目是在北半球資料蒐集開始之後才追加的，北半球國家只能以另一次補收的方式施測，南半球國家則可直接納入——因此各參與者的可得性與時點並不一致。本平台目前未納入 ICILS，若要使用須先確認每個參與者的施測狀況。</p>
+        <p><strong>PISA 2029</strong> 規劃了「媒體與人工智慧素養」（Media &amp; Artificial Intelligence Literacy, MAIL）創新領域。PISA 2025 的主測領域是科學並新增外語評量，不含 AI 素養評量。</p>
+      </div>
+    </div>
+  </section>
+
   <!-- ============ 跨評比對照 ============ -->
   <section class="panel" id="p-cross" role="tabpanel" aria-labelledby="t-cross">
     <div class="sec">
@@ -1190,6 +1285,7 @@ const OPT = /*__OPT_DATA__*/ null /*__END__*/;
 const TIMSS = /*__TIMSS_DATA__*/ null /*__END__*/;
 const TALIS = /*__TALIS_DATA__*/ null /*__END__*/;
 const QD    = /*__Q_DATA__*/ null /*__END__*/;
+const AID   = /*__AI_DATA__*/ null /*__END__*/;
 const IEA = /*__IEA_DATA__*/ null /*__END__*/;
 
 const $  = (s, r) => (r || document).querySelector(s);
@@ -1267,7 +1363,7 @@ const TABS = [
   ['tmq','TIMSS 問卷','timss'],       ['pirls','PIRLS 成就','pirls'],
   ['prq','PIRLS 問卷','pirls'],       ['iccs','ICCS 公民知識','iccs'],
   ['icq','ICCS 學生態度','iccs'],     ['ictr','ICCS 趨勢','iccs'],
-  ['talis','TALIS','talis'],
+  ['talis','TALIS','talis'],   ['ai','AI 專區','ai'],
   ['cross','跨評比對照','cross'],     ['method','方法學','meta'],
   ['system','系統','meta']];
 
@@ -1278,9 +1374,10 @@ const DS_FILTER = {
   timss: ['home','timss','tmq','cross','method','system'],
   pirls: ['home','pirls','prq','cross','method','system'],
   iccs:  ['home','iccs','icq','ictr','cross','method','system'],
-  talis: ['home','talis','cross','method','system']
+  talis: ['home','talis','ai','cross','method','system'],
+  ai:    ['home','ai','talis','method','system']
 };
-const DS_LABEL = { all:'全部', pisa:'PISA', timss:'TIMSS', pirls:'PIRLS', iccs:'ICCS', talis:'TALIS' };
+const DS_LABEL = { all:'全部', pisa:'PISA', timss:'TIMSS', pirls:'PIRLS', iccs:'ICCS', talis:'TALIS', ai:'AI 專區' };
 
 /* 每個分頁的「用什麼資料、回答什麼問題、結論是什麼」 */
 const TAB_CTX = {
@@ -1352,6 +1449,10 @@ const TAB_CTX = {
     d: 'ICCS 2016 → 2022 的公民知識與態度變化，<span class="n">15</span> 個兩輪皆參與者',
     q: '臺灣的第 1 名是自己進步，還是別人退步？',
     f: '臺灣 +1.9 分持平，<em>15 個參與者中 7 個顯著下滑、0 個上升</em>（挪威 −34.5、丹麥 −30.4）'},
+  ai: {
+    d: 'TALIS 2024 教師問卷的 AI 題組，<span class="n">28</span> 題 × <span class="n">55</span> 個參與者、<span class="n">6.3 萬</span>名教師',
+    q: '哪一個大型數據有 AI 問卷？教師實際用了嗎、怎麼用、卡在哪裡？',
+    f: '<em>只有 TALIS 2024 教師問卷有</em>；使用率中位數 39.7%，日本 17.4% 倒數第 2，臺灣未參加'},
   cross: {
     d: '五套評比十個項目的對照，以及各資料庫的設計差異',
     q: '換一套主辦單位、換一種測驗取向，結論會一樣嗎？',
@@ -1383,7 +1484,11 @@ const DATASETS = [
   {ds:'talis', org:'OECD', nm:'TALIS 2024 · 2018', sub:'教學與學習國際調查 · 教師與校長',
    rows:[['教師','19.5 萬名'],['校長','1.16 萬名'],['參與','55／47 個']],
    rows2:null,
-   res:'臺灣<b>參加 2018、未參加 2024</b>；2018 學校自主權排第 <b>36–40</b>，資源短缺排第 <b>41–43</b>'}
+   res:'臺灣<b>參加 2018、未參加 2024</b>；2018 學校自主權排第 <b>36–40</b>，資源短缺排第 <b>41–43</b>'},
+  {ds:'ai', org:'OECD', nm:'AI 專區', sub:'TALIS 2024 教師問卷的人工智慧題組',
+   rows:[['題數','28 題'],['教師','6.3 萬名'],['參與','55 個']],
+   rows2:null,
+   res:'五套評比中<b>唯一有 AI 問卷</b>者；使用率中位數 39.7%，<b>臺灣未參加</b>'}
 ];
 
 let curDS = 'all';
@@ -2080,6 +2185,80 @@ function drawIctr() {
   $('#ictrTable').innerHTML = s + '</tbody>';
 }
 initTmq(); drawTmq(); initPrq(); drawPrq(); initIcq(); drawIcq(); drawIctr();
+
+/* ---------- AI 專區 ---------- */
+/* TALIS 有 5 個參與者不在 IEA 系列的名單裡，故先查 TALIS 的對照表 */
+const aiName = c => TALN[c] || inm(c);
+/* 逐檔搜過變數標籤的結果。ICT 欄是對照組：用來證明搜尋本身有效，
+   而不是因為比對字串寫錯才一題都沒命中。 */
+const AI_INV = [
+  ['TALIS 2024','教師問卷', 611, 28, null, true],
+  ['TALIS 2024','校長問卷', 473,  0, null, false],
+  ['TALIS 2018','教師問卷', 493,  0,   11, false],
+  ['PISA 2022','學生問卷', 1278,  0,  136, false],
+  ['PISA 2022','學校問卷',  431,  0,   37, false],
+  ['TIMSS 2023','學生問卷（八年級）', 511, 0, null, false],
+  ['TIMSS 2023','教師問卷（八年級）', 169, 0, null, false],
+  ['TIMSS 2023','校長問卷（八年級）', 104, 0, null, false],
+  ['TIMSS 2023','學生／家長／教師（四年級）', 656, 0, null, false],
+  ['PIRLS 2021','學生／家長／教師／校長', 559, 0, null, false],
+  ['ICCS 2022','學生問卷', 377, 0, null, false],
+  ['ICCS 2022','教師問卷', 294, 0, null, false],
+  ['ICCS 2022','校長問卷', 227, 0, null, false],
+  ['ICCS 2016','學生問卷', 351, 0, null, false]
+];
+function drawAiInv() {
+  let s = '<thead><tr><th>資料庫</th><th>問卷</th><th>變數數</th><th>AI 題</th><th>ICT 題（對照）</th></tr></thead><tbody>';
+  AI_INV.forEach(r => {
+    s += '<tr' + (r[5] ? ' class="hl"' : '') + '><td>' + r[0] + '</td><td>' + r[1] +
+         '</td><td>' + r[2].toLocaleString('en-US') + '</td><td>' +
+         (r[3] ? '<b>' + r[3] + '</b>' : '0') + '</td><td>' +
+         (r[4] === null ? '—' : r[4]) + '</td></tr>';
+  });
+  $('#aiInvTable').innerHTML = s + '</tbody>';
+}
+
+let aiGrp = '使用率', aiIdx = null;
+function aiRows() {
+  const all = [].concat(arr(AID.usage), arr(AID.use), arr(AID.why),
+                        arr(AID.belief), arr(AID.pd));
+  return all.filter(r => r.grp === aiGrp);
+}
+function initAi() {
+  const grps = ['使用率','用途','正向信念','風險認知','不使用的原因','專業發展'];
+  seg($('#aiGrp'), grps.map(g => ({value:g, label:g})), aiGrp, v => {
+    aiGrp = v; aiIdx = null; initAi(); drawAi(); });
+  const seen = new Set(), opts = [];
+  aiRows().forEach(r => { if (!seen.has(r.idx)) { seen.add(r.idx); opts.push({value:r.idx, label:r.zh}); } });
+  if (!aiIdx || !opts.some(o => o.value === aiIdx)) aiIdx = opts.length ? opts[0].value : null;
+  seg($('#aiIdx'), opts, aiIdx, v => { aiIdx = v; drawAi(); });
+}
+function drawAi() {
+  const m = AID.meta, U = arr(AID.usage);
+  const med = U.length ? U.map(r => r.pct).sort((a,b) => a-b)[Math.floor(U.length/2)] : null;
+  const jp = U.find(r => r.CNT === 'JPN') || {}, sg = U.find(r => r.CNT === 'SGP') || {};
+  tiles('#aiTiles', [
+    ['參與者', m.n_country, 'TALIS 2024 · 不含臺灣'],
+    ['AI 模組樣本', (m.n_teacher/10000).toFixed(1) + ' 萬', '全體教師 ' + (m.n_teacher_full/10000).toFixed(1) + ' 萬的三分之一'],
+    ['AI 題數', m.n_item, '使用、用途、信念、專業發展'],
+    ['使用率中位數', fmt(med, 1) + '%', '過去 12 個月'],
+    ['東亞落差', fmt(sg.pct - jp.pct, 1) + ' 個百分點', '新加坡 ' + fmt(sg.pct,1) + '% vs 日本 ' + fmt(jp.pct,1) + '%']
+  ]);
+  const rows = aiRows().filter(r => r.idx === aiIdx).slice().sort((a,b) => b.pct - a.pct);
+  const lab = (rows[0] || {}).zh || aiIdx || '';
+  const denom = aiGrp === '不使用的原因' ? '未使用 AI 的教師' :
+                aiGrp === '專業發展' ? '全體教師' : '全體作答教師';
+  let s = '<thead><tr><th>#</th><th>國家／經濟體</th><th>' + lab + '（%）</th>' +
+          '<th>SE</th><th>樣本數</th></tr></thead><tbody>';
+  rows.forEach((r, i) => {
+    s += '<tr><td>' + (i+1) + '</td><td>' + aiName(r.CNT) + '</td><td>' + fmt(r.pct, 1) +
+         '</td><td>' + fmt(r.se, 2) + '</td><td>' + (r.n ? r.n.toLocaleString('en-US') : '—') + '</td></tr>';
+  });
+  $('#aiTable').innerHTML =
+    '<caption class="tcap">分母：' + denom + '</caption>' + s + '</tbody>';
+}
+drawAiInv(); initAi(); drawAi();
+
 
 
 /*__DL_JS__*/

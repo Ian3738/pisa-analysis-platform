@@ -184,6 +184,8 @@ def build(target):
                   lambda _: (ROOT / "talis_data.json").read_text(), html, flags=re.S)
     html = re.sub(r"/\*__Q_DATA__\*/.*?/\*__END__\*/",
                   lambda _: (ROOT / "q_data.json").read_text(), html, flags=re.S)
+    html = re.sub(r"/\*__AI_DATA__\*/.*?/\*__END__\*/",
+                  lambda _: (ROOT / "ai_data.json").read_text(), html, flags=re.S)
 
     left = re.findall(r"<!--(?:FIG|FIGSET|DLBLOCK):[^>]+-->", html)
     left += re.findall(r"/\*__[A-Z_]+__\*/", html)

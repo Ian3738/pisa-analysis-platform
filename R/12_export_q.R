@@ -86,3 +86,33 @@ export_q <- function() {
   cat("寫出 q_data.json ", round(file.info(p)$size/1024, 1), " KB\n", sep = "")
   invisible(out)
 }
+
+# ---- TALIS 2024 AI 模組 -----------------------------------------------------
+export_ai <- function() {
+  A <- readRDS(path.expand("~/TALIS/output/ai_2024.rds"))
+  tidy <- function(x) {
+    if (is.null(x) || !nrow(x)) return(data.table())
+    x[is.finite(estimate), .(CNT = CNTRY, idx, zh, grp,
+                             pct = round(100 * estimate, 2), se = round(100 * se, 3),
+                             rank, ntot, n)]
+  }
+  B <- A$belief
+  pos <- B[grp == "正向信念", .(pos = round(100 * mean(estimate), 2)), by = CNTRY]
+  neg <- B[grp == "風險認知", .(neg = round(100 * mean(estimate), 2)), by = CNTRY]
+  P <- dcast(A$pd[is.finite(estimate)], CNTRY ~ idx, value.var = c("estimate", "se"))
+  setnames(P, c("estimate_TT4G21G","estimate_TT4G24G","se_TT4G21G","se_TT4G24G"),
+              c("got","need","got_se","need_se"))
+
+  out <- list(
+    meta = c(A$meta, list(cycle = 2024L)),
+    usage  = tidy(A$usage),  use = tidy(A$use),   why = tidy(A$why),
+    belief = tidy(A$belief), dontknow = tidy(A$dontknow), pd = tidy(A$pd),
+    summary = merge(merge(pos, neg, by = "CNTRY", all = TRUE),
+                    A$usage[, .(CNTRY, use = round(100 * estimate, 2))], by = "CNTRY", all = TRUE),
+    pdgap = P[, .(CNT = CNTRY, got = round(100*got,2), need = round(100*need,2),
+                  gap = round(100*(need - got), 2))][order(-gap)])
+  p <- path.expand("~/PISA/web/ai_data.json")
+  write_json(out, p, auto_unbox = TRUE, digits = 6, na = "null")
+  cat("寫出 ai_data.json ", round(file.info(p)$size/1024, 1), " KB\n", sep = "")
+  invisible(out)
+}
